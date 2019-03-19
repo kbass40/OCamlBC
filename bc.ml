@@ -1,4 +1,6 @@
-open Core
+(*open Core*)
+
+let globalScope = Hashtbl.create 123456 (*123456 is intial guess of # of values but it doesnt really matter*)
 
 type sExpr = 
     | Atom of string
@@ -28,19 +30,24 @@ type envQueue = env list
 
 let varEval (_v: string) (_q:envQueue): float  = 0.0  
 
-let evalExpr (_e: expr) (_q:envQueue): float  = 0.0
+let evalExpr (_e: expr) (_q:envQueue): float  = 
+    match _e with    
+        | Num(x) -> x
+        | Var(x) -> varEval x _q
+        | _ -> 0.0
 
 (* Test for expression *)
-let%expect_test "evalNum" = 
+(*let%expect_test "evalNum" = 
     evalExpr (Num 10.0) [] |>
     printf "%F";
-    [%expect {| 10. |}]
+    [%expect {| 10. |}]*)
 
 let evalCode (_code: block) (_q:envQueue): unit = 
     (* crate new environment *)
     (* user fold_left  *)
     (* pop the local environment *)
     print_endline "Not implemented"
+
 
 let evalStatement (s: statement) (q:envQueue): envQueue =
     match s with 
@@ -64,11 +71,11 @@ let p1: block = [
         Expr(Var("v")) 
 ]
 
-let%expect_test "p1" =
+(*let%expect_test "p1" =
     evalCode p1 []; 
     [%expect {| 1. |}]
 
-(*
+
     v = 1.0;
     if (v>10.0) then
         v = v + 1.0
@@ -95,11 +102,11 @@ let p2: block = [
     Expr(Var("v"))
 ]
 
-let%expect_test "p1" =
+(*let%expect_test "p1" =
     evalCode p2 []; 
     [%expect {| 3628800. |}]
 
-(*  Fibbonaci sequence
+  Fibbonaci sequence
     define f(x) {
         if (x<1.0) then
             return (1.0)
@@ -125,12 +132,9 @@ let p3: block =
         Expr(Fct("f", [Num(5.0)]));
     ]
 
-let%expect_test "p3" =
+(*let%expect_test "p3" =
     evalCode p3 []; 
     [%expect {| 
         2. 
         5.      
-    |}]
-
-
-
+    |}]*)
