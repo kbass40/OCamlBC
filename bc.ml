@@ -2,6 +2,7 @@
 
 let globalScope = Stack.create ();;
 let ht = Hashtbl.create 123456;;
+Hashtbl.add ht "x" 0.;;
 
 (* Initialize the stack to hold type Hashtbl *)
 Stack.push ht globalScope;;
@@ -20,7 +21,11 @@ type expr =                         (*The sometype for expressions*)
 
 type sPair =
     | Nothing                        
-    | VarPair of string * expr           (*Used to capture variable pairs*)
+    | VarPair of string * float           (*Used to capture variable pairs*)
+
+let get_pair_val (_pair: sPair): float = match _pair with
+    | VarPair(str,flt) -> flt
+    | _ -> 0.
 
 type statement =                                      (*Statement: Call that do stuff lol*)
     | Assign of string*expr                           (*Assignment: Assigns a var to a value*)
@@ -28,16 +33,20 @@ type statement =                                      (*Statement: Call that do 
     | Expr of expr                                    (*Expresssion to evaluate*)
     | If of expr*statement list * statement list      (*If *)
     | While of expr*statement list                    (*While*)
-    | For of statement*expr*statement*statement list       (*For*)
+    | For of statement*expr*statement*statement list  (*For*)
     | FctDef of string * string list * statement list (*Def a function*)
 
 type block = statement list 
 
-type env = N of float (* complete *)
+type env = sPair list (* complete *)
 
 type envQueue = env list
 
-let varEval (_v: string) (_q: envQueue): float  = 0.0  
+
+
+let varEval (_v: string) (_q: envQueue): float  = 0.
+    (* let  *)
+    
 
 let evalOp1 (_v: string) (_e: expr) (_q: envQueue) = 0.
     (* match _v with
