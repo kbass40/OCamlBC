@@ -8,6 +8,12 @@ Hashtbl.add ht "x" 0.;;
 Stack.push ht globalScope;;
 Stack.pop globalScope;;
 
+type statRet =
+    | Normal
+    | Break
+    | Continue
+    | Return of float
+
 type sExpr = 
     | Atom of string
     | List of sExpr list
@@ -54,9 +60,9 @@ let evalFct (_v: string) (_e: expr list) (_q: envQueue) = 0.0
 
 let rec evalExpr (_e: expr) (_q: envQueue): float  = 
     match _e with 
-        | Paren("(", x, ")") -> evalExpr x _q   
         | Num(x) -> x
         | Var(x) -> varEval x _q
+        | Paren("(", x, ")") -> evalExpr x _q   
         | Op1(str, x) -> 
                         (match str with
                             | "++" -> (evalExpr x _q) +. 1.
@@ -118,7 +124,7 @@ let rec evalStatement (s: statement) (q: envQueue): envQueue =
                 else
                     evalCode codeF q
             ;q (*i think something goes here *)
-        | While(e, code) -> 
+        | While(e, code) ->    (*use recursive calls instead*)
             let cond = evalExpr e q in 
                 while(cond>0.0) do
                     evalCode code q 
