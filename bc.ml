@@ -14,6 +14,9 @@ type statRet =
     | Continue
     | Return of float
 
+let prints (s : string) = Printf.printf "%s\n" s;;
+let print (s : float) = Printf.printf "%f\n" s;;
+
 type sExpr = 
     | Atom of string
     | List of sExpr list
@@ -29,12 +32,12 @@ type expr =                         (*The sometype for expressions*)
 
 type sPair =
     | Nothing                        
-    | VarPair of string * float           (*Used to capture variable pairs*)
-    | FctPair of string * expr list       (*used to store funtions*)
+    | VarPair of string * float                              (*Used to capture variable pairs*)
+    (*| FctPair of string * string list * statement list       (*used to store funtions*)*)
 
 let get_pair_val (_pair: sPair): float = match _pair with
     | VarPair(str,flt) -> flt
-    | _ -> 0.
+    | _ -> 0.;;
 
 type statement =                                      (*Statement: Call that do stuff lol*)
     | Assign of string*expr                           (*Assignment: Assigns a var to a value*)
@@ -51,10 +54,19 @@ type env = sPair list (* complete *)
 
 type envQueue = env list
 
+let get_pair_var (_s: string) (_pair: sPair): float = match _pair with
+    | VarPair(str,flt) -> if (compare str _s = 0) then flt else 0.
+    | _ -> 0.;;
 
+let rec search_env (_s: string) (_e: env): float = match _e with
+    | [] -> 0.
+    | a::tl -> if ((get_pair_var _s a) == (get_pair_val a)) then (get_pair_val a) else search_env _s tl ;; 
 
-let varEval (_v: string) (_q: envQueue): float  = 0.
-    (* let  *)
+let rec search_que (_s: string) (_q: envQueue): float = match _q with
+    | [] -> 0.
+    | a::tl -> if ((search_env _s a) = 0.) then ( search_que _s tl) else (  search_env _s a);;
+
+let varEval (_v: string) (_q: envQueue): float = search_que _v _q 
 
 let evalFct (_v: string) (_e: expr list) (_q: envQueue) = 0.0
 
@@ -213,9 +225,11 @@ let p2: block = [
     [%expect {| 
         2. 
         5.      
-    |}]*)
-(* 
-let test = (evalExpr (Num(3.)) []); *)
+    |}]*)*)
 
 
-let main = print_float (evalExpr (Num(3.)) []); *)
+
+let testEnv = [[VarPair("x", 1.); VarPair("y", 2.); VarPair("z", 3.)]]
+
+
+let main = print_float (evalExpr (Op2(">", Num(10.), Var("y"))) testEnv); 
