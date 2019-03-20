@@ -41,6 +41,7 @@ let get_pair_val (_pair: sPair): float = match _pair with
 
 type statement =                                      (*Statement: Call that do stuff lol*)
     | Assign of string*expr                           (*Assignment: Assigns a var to a value*)
+    | Print of string*expr                            (*Print*)
     | Return of expr                                  (*Return: Special Case to pull from block*)
     | Expr of expr                                    (*Expresssion to evaluate*)
     | If of expr*statement list * statement list      (*If *)
@@ -79,7 +80,7 @@ let rec evalExpr (_e: expr) (_q: envQueue): float  =
                         (match str with
                             | "++" -> (evalExpr x _q) +. 1.
                             | "--" -> (evalExpr x _q) -. 1.
-                            | "!" -> if ((evalExpr x _q) != 0) then 0. else 1.
+                            | "!" -> if ((evalExpr x _q) != 0.) then 0. else 1.
                             | _ -> 0.0 )
         | Op2(str, x, y) -> 
                         (match str with
@@ -144,6 +145,7 @@ let rec evalStatement (s: statement) (q: envQueue): envQueue =
         | Assign(_v, _e) -> evalAssign _v _e q
         | Return(e) -> q (*evalExpr e q *) (*idk*)
         | Expr(e) -> (print (evalExpr e q)); q 
+        | Print(str, x)-> print (evalExpr x q); q
         | If(e, codeT, codeF) -> 
             let cond = evalExpr e q in
                 if(cond>0.0) then
@@ -250,4 +252,4 @@ let test = evalStatement (Assign("z", Num(5.))) []
 
 let test2 = evalStatement (Assign("z", Num(8.))) []
 
-let main = evalStatement (Expr(Var("z"))) test2
+let main = evalStatement (Expr(Var("z"))) test2; evalStatement (Print("print", Var("z"))) test
