@@ -1,6 +1,11 @@
 (*open Core*)
 
-let globalScope = Stack.create ()
+let globalScope = Stack.create ();;
+let ht = Hashtbl.create 123456;;
+
+(* Initialize the stack to hold type Hashtbl *)
+Stack.push ht globalScope;;
+Stack.pop globalScope;;
 
 type sExpr = 
     | Atom of string
@@ -12,6 +17,10 @@ type expr =                         (*The sometype for expressions*)
     | Op1 of string*expr            (*Unary Operator*)
     | Op2 of string*expr*expr       (*Binary Operator*)
     | Fct of string * expr list     (*Function*)
+
+type sPair =
+    | Nothing                        
+    | VarPair of string * expr           (*Used to capture variable pairs*)
 
 type statement =                                      (*Statement: Call that do stuff lol*)
     | Assign of string*expr                           (*Assignment: Assigns a var to a value*)
@@ -30,7 +39,9 @@ type envQueue = env list
 
 let varEval (_v: string) (_q: envQueue): float  = 0.0  
 
-let evalOp1 (_v: string) (_e: expr) (_q: envQueue) = 0.0 
+let evalOp1 (_v: string) (_e: expr) (_q: envQueue) = 0.
+    (* match _v with
+        |  *)
 
 let evalOp2 (_v: string) (_l: expr) (_r: expr) (_q: envQueue) = 0.0 
 
@@ -43,7 +54,7 @@ let evalExpr (_e: expr) (_q: envQueue): float  =
         | Op1(str, x) -> evalOp1 str x _q
         | Op2(str, x, y) -> evalOp2 str x y _q
         | Fct(str, [x]) -> evalFct str [x] _q
-        | _ -> 0.0 (*some kind of error here *)
+        | _ -> 0.0 (*some kind of error here*)
 
 (* Test for expression *)
 (*let%expect_test "evalNum" = 
@@ -51,37 +62,37 @@ let evalExpr (_e: expr) (_q: envQueue): float  =
     printf "%F";
     [%expect {| 10. |}]*)
 
-let evalCode (_code: block) (_q: envQueue): unit = 
+let evalCode (_code: block) (_q: envQueue): unit = ()
     (* crate new environment *)
     (* user fold_left  *)
     (* pop the local environment *)
-    Stack.push (Hashtbl.create 123456) globalScope
     (*let scope = Stack.top globalScope in
         let eval = evalStatement Assign("v" (Num(5))) scope*)
     (*print_endline "does this do something?"*)
 
 
-let evalStatement (s: statement) (q: envQueue): envQueue =
+let evalStatement (s: statement) (q: envQueue): envQueue = 
     match s with 
         | Assign(_v, _e) -> (* eval e and store in v *) q
-        | If(e, codeT, codeF) -> 
+        (* | If(e, codeT, codeF) -> 
             let cond = evalExpr e q in
                 if(cond>0.0) then
                     evalCode codeT q 
                 else
                     evalCode codeF q
-            ;q
+            q; *)
         | _ -> q (*ignore *)
-
+;
 
 (* 
     v = 10; 
     v // display v
  *)
-let p1: block = [
+
+(* let p1: block = [
         Assign("v", Num(1.0));
         Expr(Var("v")) 
-]
+];
 
 (*let%expect_test "p1" =
     evalCode p1 []; 
@@ -112,7 +123,7 @@ let p2: block = [
         )]
     );
     Expr(Var("v"))
-]
+]; *)
 
 (*let%expect_test "p1" =
     evalCode p2 []; 
@@ -129,7 +140,7 @@ let p2: block = [
     f(3)
     f(5)
  *)
-let p3: block = 
+(* let p3: block = 
     [
         FctDef("f", ["x"], [
             If(
@@ -142,7 +153,7 @@ let p3: block =
         ]);
         Expr(Fct("f", [Num(3.0)]));
         Expr(Fct("f", [Num(5.0)]));
-    ]
+    ];
 
 (*let%expect_test "p3" =
     evalCode p3 []; 
@@ -150,9 +161,8 @@ let p3: block =
         2. 
         5.      
     |}]*)
+(* 
+let test = (evalExpr (Num(3.)) []); *)
 
-let test = (evalExpr (Num(3.)) [])
 
-
-let main = 
-    print_float (evalExpr (Num(3.)) [])
+let main = print_float (evalExpr (Num(3.)) []); *)
