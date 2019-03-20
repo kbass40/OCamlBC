@@ -16,15 +16,18 @@ type sExpr =
     | List of sExpr list
 
 type expr =                         (*The sometype for expressions*)
+    | Paren of string*expr*string   (*Parens*)
     | Num of float                  (*Base number*)
     | Var of string                 (*Variable Reference*)
     | Op1 of string*expr            (*Unary Operator*)
     | Op2 of string*expr*expr       (*Binary Operator*)
+    | Math of string*expr*string    (*Math operators*)
     | Fct of string * expr list     (*Function*)
 
 type sPair =
     | Nothing                        
     | VarPair of string * float           (*Used to capture variable pairs*)
+    | FctPair of string * expr list       (*used to store funtions*)
 
 let get_pair_val (_pair: sPair): float = match _pair with
     | VarPair(str,flt) -> flt
@@ -57,6 +60,7 @@ let rec search_que (_s: string) (_q: envQueue): float = match _q with
     | [] -> 0.
     | a::tl -> if ((search_env _s a) = 0.) then (print (search_env _s a) ; search_que _s tl) else ( print (search_env _s a) ; search_env _s a);;
 
+<<<<<<< HEAD
 let varEval (_v: string) (_q: envQueue): float = search_que _v _q ;;
 
 let evalOp1 (_v: string) (_e: expr) (_q: envQueue) = 0.
@@ -64,15 +68,43 @@ let evalOp1 (_v: string) (_e: expr) (_q: envQueue) = 0.
         |  *)
 
 let evalOp2 (_v: string) (_l: expr) (_r: expr) (_q: envQueue) = 0.0 
+=======
+let varEval (_v: string) (_q: envQueue): float  = 0.
+    (* let  *)
+>>>>>>> 95ba6cab0ec5d1294a890d438e0f02c5a3b7b6be
 
 let evalFct (_v: string) (_e: expr list) (_q: envQueue) = 0.0
 
-let evalExpr (_e: expr) (_q: envQueue): float  = 
-    match _e with    
+let rec evalExpr (_e: expr) (_q: envQueue): float  = 
+    match _e with 
+        | Paren("(", x, ")") -> evalExpr x _q   
         | Num(x) -> x
         | Var(x) -> varEval x _q
-        | Op1(str, x) -> evalOp1 str x _q
-        | Op2(str, x, y) -> evalOp2 str x y _q
+        | Op1(str, x) -> 
+                        (match str with
+                            | "++" -> (evalExpr x _q) +. 1.
+                            | "--" -> (evalExpr x _q) -. 1.
+                            | _ -> 0.0 )
+        | Op2(str, x, y) -> 
+                        (match str with
+                            | "^" -> (evalExpr x _q) ** (evalExpr y _q)
+                            | "*" -> (evalExpr x _q) *. (evalExpr y _q)
+                            | "/" -> (evalExpr x _q) /. (evalExpr y _q)
+                            | "+" -> (evalExpr x _q) +. (evalExpr y _q)
+                            | "-" -> (evalExpr x _q) -. (evalExpr y _q)
+                            | "==" -> if((evalExpr x _q) == (evalExpr y _q)) then 1. else 0.
+                            | ">=" -> if((evalExpr x _q) >= (evalExpr y _q)) then 1. else 0.
+                            | "<=" -> if((evalExpr x _q) <= (evalExpr y _q)) then 1. else 0.
+                            | ">" -> if((evalExpr x _q) > (evalExpr y _q)) then 1. else 0.
+                            | "<" -> if((evalExpr x _q) < (evalExpr y _q)) then 1. else 0.
+                            | _ -> 0.0 )
+        | Math(str, x, ")") -> 
+                        (match str with
+                            | "s(" -> (sin (evalExpr x _q))
+                            | "c(" -> (cos (evalExpr x _q))
+                            | "e(" -> (exp (evalExpr x _q))
+                            | "l(" -> (log (evalExpr x _q))
+                            | _ -> 0.0 )
         | Fct(str, [x]) -> evalFct str [x] _q
         | _ -> 0.0 (*some kind of error here*)
 
