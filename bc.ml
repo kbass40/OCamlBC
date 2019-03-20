@@ -1,6 +1,6 @@
 (*open Core*)
 
-let globalScope = Hashtbl.create 123456 (*123456 is intial guess of # of values but it doesnt really matter*)
+let globalScope = Stack.create ()
 
 type sExpr = 
     | Atom of string
@@ -46,7 +46,8 @@ let evalCode (_code: block) (_q:envQueue): unit =
     (* crate new environment *)
     (* user fold_left  *)
     (* pop the local environment *)
-    print_endline "Not implemented"
+    Stack.push (Hashtbl.create 123456) globalScope
+    (*print_endline "does this do something?"*)
 
 
 let evalStatement (s: statement) (q:envQueue): envQueue =
