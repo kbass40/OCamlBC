@@ -118,9 +118,9 @@ let pop lst = match lst with
     | [] -> []
     | _::tl -> tl
 
-let evalCode (_code: block) (_q: envQueue): unit = 
+let evalCode (_code: block) (_q: envQueue): envQueue = _q
     (* crate new environment *)
-    let que = [[]] @ _q in ()
+    (*let que = [[]] @ _q in ()*)
         (* let rec eval_states que block: envQue =
             | [] -> que
             | a::tl -> match [a] with 
@@ -137,9 +137,14 @@ let evalCode (_code: block) (_q: envQueue): unit =
 
 let defFct (_str: string) (_params: string list) (_code: statement list) (_q: envQueue) = 0.0
 
-let evalFor (_int: statement) (_bool: expr) (_inc: statement) (_code: statement list) (_q: envQueue) = 
-    (*let cond = evalExpr _bool _q in*)
-        0.0
+
+let rec evalWhile(_e: expr) (_code: statement list) (_q: envQueue): envQueue =
+    let cond = evalExpr _e _q in
+        if(cond>0.) then
+            let q = evalCode _code _q in 
+                evalWhile _e _code q
+        else
+            _q
 
 let evalAssign (_v: string) (_e: expr) (_q: envQueue): envQueue = 
     let e = evalExpr _e _q in
@@ -158,17 +163,20 @@ let rec evalStatement (s: statement) (q: envQueue): envQueue =
                 else
                     evalCode codeF q
             ;q (*i think something goes here *)
-        | While(e, code) ->    (*use recursive calls instead*)
-            let cond = evalExpr e q in 
-                while(cond>0.0) do
-                    evalCode code q 
-                done
-            ;q (*i think something goes here *)
-        | For(int, bool, inc, code) -> evalFor int bool inc code q
-            ;q                                      (*these two causes the warnings idk why*)
+        | While(e, code) -> evalWhile e code q
+        | For(int, bool, inc, code) ->  let que = evalStatement int q in
+                                            evalFor bool inc code que
         | FctDef(str, params, code) -> defFct str params code q 
             ;q
-        (*| _ -> q (*ignore *)*) (*throw error here *)
+        (*| _ -> q (*ignore *) (*throw error here *)*)
+        and evalFor (_bool: expr) (_inc: statement) (_code: statement list) (_q: envQueue): envQueue = 
+            let cond = evalExpr _bool _q in
+                if(cond>0.) then
+                    let q = evalCode _code _q in 
+                        let que = evalStatement _inc q in
+                            evalFor _bool _inc _code que
+                else
+                     _q
 
 
 (* 
