@@ -6,21 +6,21 @@ type sExpr =
     | Atom of string
     | List of sExpr list
 
-type expr = 
-    | Num of float
-    | Var of string
-    | Op1 of string*expr
-    | Op2 of string*expr*expr
-    | Fct of string * expr list
+type expr =                         (*The sometype for expressions*)
+    | Num of float                  (*Base number*)
+    | Var of string                 (*Variable Reference*)
+    | Op1 of string*expr            (*Unary Operator*)
+    | Op2 of string*expr*expr       (*Binary Operator*)
+    | Fct of string * expr list     (*Function*)
 
-type statement = 
-    | Assign of string*expr
-    | Return of expr
-    | Expr of expr
-    | If of expr*statement list * statement list
-    | While of expr*statement list
-    | For of statement*expr*statement*statement list
-    | FctDef of string * string list * statement list 
+type statement =                                      (*Statement: Call that do stuff lol*)
+    | Assign of string*expr                           (*Assignment: Assigns a var to a value*)
+    | Return of expr                                  (*Return: Special Case to pull from block*)
+    | Expr of expr                                    (*Expresssion to evaluate*)
+    | If of expr*statement list * statement list      (*If *)
+    | While of expr*statement list                    (*While*)
+    | For of statement*expr*statement*statement list  (*For*)
+    | FctDef of string * string list * statement list (*Def a function*)
 
 type block = statement list 
 
