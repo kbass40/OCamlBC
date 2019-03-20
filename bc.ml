@@ -123,15 +123,21 @@ let evalCode (_code: block) (_q: envQueue): unit =
     (*print_endline "does this do something?"*)
 
 
+
+
 let defFct (_str: string) (_params: string list) (_code: statement list) (_q: envQueue) = 0.0
 
 let evalFor (_int: statement) (_bool: expr) (_inc: statement) (_code: statement list) (_q: envQueue) = 
     (*let cond = evalExpr _bool _q in*)
         0.0
 
+let evalAssign (_v: string) (_e: expr) (_q: envQueue): envQueue = 
+    let e = evalExpr _e _q in
+        [[VarPair(_v, e)]] @ _q
+
 let rec evalStatement (s: statement) (q: envQueue): envQueue =
     match s with 
-        | Assign(_v, _e) -> (* eval e and store in v *) q
+        | Assign(_v, _e) -> evalAssign _v _e q
         | Return(e) -> q (*evalExpr e q *) (*idk*)
         | Expr(e) -> (print (evalExpr e q)); q 
         | If(e, codeT, codeF) -> 
@@ -236,5 +242,8 @@ let p2: block = [
 
 let testEnv = [[VarPair("x", 1.); VarPair("y", 2.); VarPair("z", 3.)]]
 
+let test = evalStatement (Assign("z", Num(5.))) []
 
-let main = evalStatement (Expr(Var("z"))) testEnv
+let test2 = evalStatement (Assign("z", Num(8.))) []
+
+let main = evalStatement (Expr(Var("z"))) test2
