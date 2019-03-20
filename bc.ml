@@ -28,7 +28,7 @@ type statement =                                      (*Statement: Call that do 
     | Expr of expr                                    (*Expresssion to evaluate*)
     | If of expr*statement list * statement list      (*If *)
     | While of expr*statement list                    (*While*)
-    | For of statement*expr*statement*statement list  (*For*)
+    | For of statement*expr*statement*statement list       (*For*)
     | FctDef of string * string list * statement list (*Def a function*)
 
 type block = statement list 
@@ -71,18 +71,36 @@ let evalCode (_code: block) (_q: envQueue): unit = ()
     (*print_endline "does this do something?"*)
 
 
-let evalStatement (s: statement) (q: envQueue): envQueue = 
+let defFct (_str: string) (_params: string list) (_code: statement list) (_q: envQueue) = 0.0
+
+let evalFor (_int: statement) (_bool: expr) (_inc: statement) (_code: statement list) (_q: envQueue) = 
+    (*let cond = evalExpr _bool _q in*)
+        0.0
+
+let rec evalStatement (s: statement) (q: envQueue): envQueue =
     match s with 
         | Assign(_v, _e) -> (* eval e and store in v *) q
-        (* | If(e, codeT, codeF) -> 
+        | Return(e) -> q (*evalExpr e q *) (*idk*)
+        | Expr(e) -> q (*evalExpr e q*) (*idk*)
+        | If(e, codeT, codeF) -> 
             let cond = evalExpr e q in
                 if(cond>0.0) then
                     evalCode codeT q 
                 else
                     evalCode codeF q
-            q; *)
-        | _ -> q (*ignore *)
-;
+            ;q (*i think something goes here *)
+        | While(e, code) -> 
+            let cond = evalExpr e q in 
+                while(cond>0.0) do
+                    evalCode code q 
+                done
+            ;q (*i think something goes here *)
+        | For(int, bool, inc, code) -> evalFor int bool inc code q
+            ;q                                      (*these two causes the warnings idk why*)
+        | FctDef(str, params, code) -> defFct str params code q 
+            ;q
+        (*| _ -> q (*ignore *)*) (*throw error here *)
+
 
 (* 
     v = 10; 
