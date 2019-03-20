@@ -8,6 +8,9 @@ Hashtbl.add ht "x" 0.;;
 Stack.push ht globalScope;;
 Stack.pop globalScope;;
 
+let prints (s : string) = Printf.printf "%s\n" s;;
+let print (s : float) = Printf.printf "%f\n" s;;
+
 type sExpr = 
     | Atom of string
     | List of sExpr list
@@ -25,7 +28,7 @@ type sPair =
 
 let get_pair_val (_pair: sPair): float = match _pair with
     | VarPair(str,flt) -> flt
-    | _ -> 0.
+    | _ -> 0.;;
 
 type statement =                                      (*Statement: Call that do stuff lol*)
     | Assign of string*expr                           (*Assignment: Assigns a var to a value*)
@@ -42,11 +45,19 @@ type env = sPair list (* complete *)
 
 type envQueue = env list
 
+let get_pair_var (_s: string) (_pair: sPair): float = match _pair with
+    | VarPair(str,flt) -> if (compare str _s = 0) then flt else 0.
+    | _ -> 0.;;
 
+let rec search_env (_s: string) (_e: env): float = match _e with
+    | [] -> 0.
+    | a::tl -> if ((get_pair_var _s a) == (get_pair_val a)) then (get_pair_val a) else search_env _s tl ;; 
 
-let varEval (_v: string) (_q: envQueue): float  = 0.
-    (* let  *)
-    
+let rec search_que (_s: string) (_q: envQueue): float = match _q with
+    | [] -> 0.
+    | a::tl -> if ((search_env _s a) = 0.) then (print (search_env _s a) ; search_que _s tl) else ( print (search_env _s a) ; search_env _s a);;
+
+let varEval (_v: string) (_q: envQueue): float = search_que _v _q ;;
 
 let evalOp1 (_v: string) (_e: expr) (_q: envQueue) = 0.
     (* match _v with
