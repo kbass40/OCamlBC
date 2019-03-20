@@ -63,6 +63,10 @@ let evalCode (_code: block) (_q: envQueue): unit =
 
 let defFct (_str: string) (_params: string list) (_code: statement list) (_q: envQueue) = 0.0
 
+let evalFor (_int: statement) (_bool: expr) (_inc: statement) (_code: statement list) (_q: envQueue) = 
+    (*let cond = evalExpr _bool _q in*)
+        0.0
+
 let rec evalStatement (s: statement) (q: envQueue): envQueue =
     match s with 
         | Assign(_v, _e) -> (* eval e and store in v *) q
@@ -81,13 +85,8 @@ let rec evalStatement (s: statement) (q: envQueue): envQueue =
                     evalCode code q 
                 done
             ;q (*i think something goes here *)
-        | For(int, bool, inc, code) ->
-            let cond = evalExpr bool q in
-                while(cond>0.0) do
-                    evalCode code q; 
-                    evalStatement inc q (*idk if this has to be recursive, this causes the warning*)
-                done
-            ;q
+        | For(int, bool, inc, code) -> evalFor int bool inc code q
+            ;q                                      (*these two causes the warnings idk why*)
         | FctDef(str, params, code) -> defFct str params code q 
             ;q
         (*| _ -> q (*ignore *)*) (*throw error here *)
