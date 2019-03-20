@@ -28,13 +28,22 @@ type env = N of float (* complete *)
 
 type envQueue = env list
 
-let varEval (_v: string) (_q:envQueue): float  = 0.0  
+let varEval (_v: string) (_q: envQueue): float  = 0.0  
 
-let evalExpr (_e: expr) (_q:envQueue): float  = 
+let evalOp1 (_v: string) (_e: expr) (_q: envQueue) = 0.0 
+
+let evalOp2 (_v: string) (_l: expr) (_r: expr) (_q: envQueue) = 0.0 
+
+let evalFct (_v: string) (_e: expr list) (_q: envQueue) = 0.0
+
+let evalExpr (_e: expr) (_q: envQueue): float  = 
     match _e with    
         | Num(x) -> x
         | Var(x) -> varEval x _q
-        | _ -> 0.0
+        | Op1(str, x) -> evalOp1 str x _q
+        | Op2(str, x, y) -> evalOp2 str x y _q
+        | Fct(str, [x]) -> evalFct str [x] _q
+        | _ -> 0.0 (*some kind of error here *)
 
 (* Test for expression *)
 (*let%expect_test "evalNum" = 
@@ -42,15 +51,17 @@ let evalExpr (_e: expr) (_q:envQueue): float  =
     printf "%F";
     [%expect {| 10. |}]*)
 
-let evalCode (_code: block) (_q:envQueue): unit = 
+let evalCode (_code: block) (_q: envQueue): unit = 
     (* crate new environment *)
     (* user fold_left  *)
     (* pop the local environment *)
     Stack.push (Hashtbl.create 123456) globalScope
+    (*let scope = Stack.top globalScope in
+        let eval = evalStatement Assign("v" (Num(5))) scope*)
     (*print_endline "does this do something?"*)
 
 
-let evalStatement (s: statement) (q:envQueue): envQueue =
+let evalStatement (s: statement) (q: envQueue): envQueue =
     match s with 
         | Assign(_v, _e) -> (* eval e and store in v *) q
         | If(e, codeT, codeF) -> 
@@ -139,3 +150,9 @@ let p3: block =
         2. 
         5.      
     |}]*)
+
+let test = (evalExpr (Num(3.)) [])
+
+
+let main = 
+    print_float (evalExpr (Num(3.)) [])
