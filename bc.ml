@@ -113,8 +113,9 @@ let pop lst = match lst with
     | [] -> []
     | _::tl -> tl
 
-let evalCode (_code: block) (_q: envQueue): unit = ()
+let evalCode (_code: block) (_q: envQueue): unit = 
     (* crate new environment *)
+    let que = [[]] @ _q in ()
     (* user fold_left  *)
     (* pop the local environment *)
     (*let scope = Stack.top globalScope in
@@ -132,7 +133,7 @@ let rec evalStatement (s: statement) (q: envQueue): envQueue =
     match s with 
         | Assign(_v, _e) -> (* eval e and store in v *) q
         | Return(e) -> q (*evalExpr e q *) (*idk*)
-        | Expr(e) -> q (*evalExpr e q*) (*idk*)
+        | Expr(e) -> (print (evalExpr e q)); q 
         | If(e, codeT, codeF) -> 
             let cond = evalExpr e q in
                 if(cond>0.0) then
@@ -236,4 +237,4 @@ let p2: block = [
 let testEnv = [[VarPair("x", 1.); VarPair("y", 2.); VarPair("z", 3.)]]
 
 
-let main = print_float (evalExpr (Op2(">", Num(10.), Var("y"))) testEnv); 
+let main = evalStatement (Expr(Var("z"))) testEnv
