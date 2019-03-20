@@ -109,6 +109,10 @@ let rec evalExpr (_e: expr) (_q: envQueue): float  =
     printf "%F";
     [%expect {| 10. |}]*)
 
+let pop lst = match lst with 
+    | [] -> []
+    | _::tl -> tl
+
 let evalCode (_code: block) (_q: envQueue): unit = ()
     (* crate new environment *)
     (* user fold_left  *)
