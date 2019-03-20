@@ -79,6 +79,7 @@ let rec evalExpr (_e: expr) (_q: envQueue): float  =
                         (match str with
                             | "++" -> (evalExpr x _q) +. 1.
                             | "--" -> (evalExpr x _q) -. 1.
+                            | "!" -> if ((evalExpr x _q) != 0) then 0. else 1.
                             | _ -> 0.0 )
         | Op2(str, x, y) -> 
                         (match str with
@@ -87,7 +88,10 @@ let rec evalExpr (_e: expr) (_q: envQueue): float  =
                             | "/" -> (evalExpr x _q) /. (evalExpr y _q)
                             | "+" -> (evalExpr x _q) +. (evalExpr y _q)
                             | "-" -> (evalExpr x _q) -. (evalExpr y _q)
+                            | "&&" -> if((evalExpr x _q) != 0. && (evalExpr y _q) != 0.) then 1. else 0.
+                            | "||" -> if((evalExpr x _q) != 0. || (evalExpr y _q) != 0.) then 1. else 0.
                             | "==" -> if((evalExpr x _q) == (evalExpr y _q)) then 1. else 0.
+                            | "!=" -> if((evalExpr x _q) != (evalExpr y _q)) then 1. else 0.
                             | ">=" -> if((evalExpr x _q) >= (evalExpr y _q)) then 1. else 0.
                             | "<=" -> if((evalExpr x _q) <= (evalExpr y _q)) then 1. else 0.
                             | ">" -> if((evalExpr x _q) > (evalExpr y _q)) then 1. else 0.
