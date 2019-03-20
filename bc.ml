@@ -121,6 +121,11 @@ let pop lst = match lst with
 let evalCode (_code: block) (_q: envQueue): unit = 
     (* crate new environment *)
     let que = [[]] @ _q in ()
+        (* let rec eval_states que block: envQue =
+            | [] -> que
+            | a::tl -> match [a] with 
+                | Return(ex) -> evalExpr  *)
+
     (* user fold_left  *)
     (* pop the local environment *)
     (*let scope = Stack.top globalScope in
