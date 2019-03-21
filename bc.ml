@@ -70,45 +70,45 @@ let rec search_que (_s: string) (_q: envQueue): float = match _q with
     | [] -> 0.
     | a::tl -> if ((search_env _s a) = 0.) then ( search_que _s tl) else (  search_env _s a);;
 
-let varEval (_v: string) (_q: envQueue): float = search_que _v _q;; 
+let varEval (_v: string) (_p: progState): float = search_que _v _p;; 
 
 let evalFct (_v: string) (_e: expr list) (_q: envQueue) = 0.0;;
 
-let rec evalExpr (_e: expr) (_q: envQueue): float  = 
+let rec evalExpr (_e: expr) (_p: progState): float  = 
     match _e with 
         | Num(x) -> x
-        | Var(x) -> varEval x _q
-        | Paren("(", x, ")") -> evalExpr x _q   
+        | Var(x) -> varEval x _p
+        | Paren("(", x, ")") -> evalExpr x _p   
         | Op1(str, x) -> 
                         (match str with
-                            | "++" -> (evalExpr x _q) +. 1.
-                            | "--" -> (evalExpr x _q) -. 1.
-                            | "!" -> if ((evalExpr x _q) != 0.) then 0. else 1.
+                            | "++" -> (evalExpr x _p) +. 1.
+                            | "--" -> (evalExpr x _p) -. 1.
+                            | "!" -> if ((evalExpr x _p) != 0.) then 0. else 1.
                             | _ -> 0.0 )
         | Op2(str, x, y) -> 
                         (match str with
-                            | "^" -> (evalExpr x _q) ** (evalExpr y _q)
-                            | "*" -> (evalExpr x _q) *. (evalExpr y _q)
-                            | "/" -> (evalExpr x _q) /. (evalExpr y _q)
-                            | "+" -> (evalExpr x _q) +. (evalExpr y _q)
-                            | "-" -> (evalExpr x _q) -. (evalExpr y _q)
-                            | "&&" -> if((evalExpr x _q) != 0. && (evalExpr y _q) != 0.) then 1. else 0.
-                            | "||" -> if((evalExpr x _q) != 0. || (evalExpr y _q) != 0.) then 1. else 0.
-                            | "==" -> if((evalExpr x _q) == (evalExpr y _q)) then 1. else 0.
-                            | "!=" -> if((evalExpr x _q) != (evalExpr y _q)) then 1. else 0.
-                            | ">=" -> if((evalExpr x _q) >= (evalExpr y _q)) then 1. else 0.
-                            | "<=" -> if((evalExpr x _q) <= (evalExpr y _q)) then 1. else 0.
-                            | ">" -> if((evalExpr x _q) > (evalExpr y _q)) then 1. else 0.
-                            | "<" -> if((evalExpr x _q) < (evalExpr y _q)) then 1. else 0.
+                            | "^" -> (evalExpr x _p) ** (evalExpr y _p)
+                            | "*" -> (evalExpr x _p) *. (evalExpr y _p)
+                            | "/" -> (evalExpr x _p) /. (evalExpr y _p)
+                            | "+" -> (evalExpr x _p) +. (evalExpr y _p)
+                            | "-" -> (evalExpr x _p) -. (evalExpr y _p)
+                            | "&&" -> if((evalExpr x _p) != 0. && (evalExpr y _p) != 0.) then 1. else 0.
+                            | "||" -> if((evalExpr x _p) != 0. || (evalExpr y _p) != 0.) then 1. else 0.
+                            | "==" -> if((evalExpr x _p) == (evalExpr y _p)) then 1. else 0.
+                            | "!=" -> if((evalExpr x _p) != (evalExpr y _p)) then 1. else 0.
+                            | ">=" -> if((evalExpr x _p) >= (evalExpr y _p)) then 1. else 0.
+                            | "<=" -> if((evalExpr x _p) <= (evalExpr y _p)) then 1. else 0.
+                            | ">" -> if((evalExpr x _p) > (evalExpr y _p)) then 1. else 0.
+                            | "<" -> if((evalExpr x _p) < (evalExpr y _p)) then 1. else 0.
                             | _ -> 0.0 )
         | Math(str, x, ")") -> 
                         (match str with
-                            | "s(" -> (sin (evalExpr x _q))
-                            | "c(" -> (cos (evalExpr x _q))
-                            | "e(" -> (exp (evalExpr x _q))
-                            | "l(" -> (log (evalExpr x _q))
+                            | "s(" -> (sin (evalExpr x _p))
+                            | "c(" -> (cos (evalExpr x _p))
+                            | "e(" -> (exp (evalExpr x _p))
+                            | "l(" -> (log (evalExpr x _p))
                             | _ -> 0.0 )
-        | Fct(str, [x]) -> evalFct str [x] _q
+        | Fct(str, [x]) -> evalFct str [x] _p
         | _ -> 0.0 (*some kind of error here*);;
 
 (* Test for expression *)
@@ -122,26 +122,26 @@ let pop lst = match lst with
     | _::tl -> tl ;;
 
 
-let defFct (_str: string) (_params: string list) (_code: statement list) (_q: envQueue): progState = 
-    [[FctPair(_str, _params, _code)]] @ _q ;;
+let defFct (_str: string) (_params: string list) (_code: statement list) (_p: progState): progState = 
+    [[FctPair(_str, _params, _code)]] @ _p ;;
 
 
-let evalAssign (_v: string) (_e: expr) (_q: envQueue): progState = 
-    let e = evalExpr _e _q in
-        [[VarPair(_v, e)]] @ _q
+let evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
+    let e = evalExpr _e _p in
+        [[VarPair(_v, e)]] @ _p
 
-let rec evalStatement (s: statement) (q: envQueue): progState =
+let rec evalStatement (s: statement) (p: progState): progState =
     match s with 
-        | Assign(_v, _e) -> evalAssign _v _e Normal
-        | Return(e) -> Return(evalExpr e q)
-        | Expr(e) -> (print (evalExpr e q)); Normal 
-        | Print(str, x)-> print (evalExpr x q); Normal
+        | Assign(_v, _e) -> evalAssign _v _e 
+        | Return(e) -> Return((evalExpr e p), p)
+        | Expr(e) -> (print (evalExpr e q)); Normal(evalExpr e q, p) 
+        | Print(str, x)-> print (evalExpr x q); Normal(evalExpr e q, p) 
         | If(e, codeT, codeF) -> 
-            let cond = evalExpr e q in
+            let cond = evalExpr e p in
                 if(cond>0.0) then
-                    evalCode codeT q 
+                    evalCode codeT p 
                 else
-                    evalCode codeF q
+                    evalCode codeF p
         | While(e, code) -> evalWhile e code q
         | For(int, bool, inc, code) ->  let que = evalStatement int q in
                                             evalFor bool inc code que
@@ -154,7 +154,7 @@ let rec evalStatement (s: statement) (q: envQueue): progState =
                         let que = evalStatement _inc q in
                             evalFor _bool _inc _code que
                 else
-                     _q
+                     _p
     and eval_states (q: envQueue) (code: block): envQueue = match code with 
         | [] -> pop q            (* pop the local environment *)
         | a::tl -> evalStatement a q; eval_states q tl
