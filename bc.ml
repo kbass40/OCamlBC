@@ -98,41 +98,41 @@ let evalFct (_v: string) (_code: block) (_pS: progState) = match _pS with
 let defFct (_str: string) (_params: string list) (_code: statement list) (_pS: progState): envQueue = 
     [[FctPair(_str, _params, _code)]] @ _q ;;
 
-let rec evalExpr (_e: expr) (_pS: progState): float  = 
+let rec evalExpr (_e: expr) (_p: progState): float  = 
     match _e with 
         | Num(x) -> x
-        | Var(x) -> varEval x _q
-        | Paren("(", x, ")") -> evalExpr x _q   
+        | Var(x) -> varEval x _p
+        | Paren("(", x, ")") -> evalExpr x _p   
         | Op1(str, x) -> 
                         (match str with
-                            | "++" -> (evalExpr x _q) +. 1.
-                            | "--" -> (evalExpr x _q) -. 1.
-                            | "!" -> if ((evalExpr x _q) != 0.) then 0. else 1.
+                            | "++" -> (evalExpr x _p) +. 1.
+                            | "--" -> (evalExpr x _p) -. 1.
+                            | "!" -> if ((evalExpr x _p) != 0.) then 0. else 1.
                             | _ -> 0.0 )
         | Op2(str, x, y) -> 
                         (match str with
-                            | "^" -> (evalExpr x _q) ** (evalExpr y _q)
-                            | "*" -> (evalExpr x _q) *. (evalExpr y _q)
-                            | "/" -> (evalExpr x _q) /. (evalExpr y _q)
-                            | "+" -> (evalExpr x _q) +. (evalExpr y _q)
-                            | "-" -> (evalExpr x _q) -. (evalExpr y _q)
-                            | "&&" -> if((evalExpr x _q) != 0. && (evalExpr y _q) != 0.) then 1. else 0.
-                            | "||" -> if((evalExpr x _q) != 0. || (evalExpr y _q) != 0.) then 1. else 0.
-                            | "==" -> if((evalExpr x _q) == (evalExpr y _q)) then 1. else 0.
-                            | "!=" -> if((evalExpr x _q) != (evalExpr y _q)) then 1. else 0.
-                            | ">=" -> if((evalExpr x _q) >= (evalExpr y _q)) then 1. else 0.
-                            | "<=" -> if((evalExpr x _q) <= (evalExpr y _q)) then 1. else 0.
-                            | ">" -> if((evalExpr x _q) > (evalExpr y _q)) then 1. else 0.
-                            | "<" -> if((evalExpr x _q) < (evalExpr y _q)) then 1. else 0.
+                            | "^" -> (evalExpr x _p) ** (evalExpr y _p)
+                            | "*" -> (evalExpr x _p) *. (evalExpr y _p)
+                            | "/" -> (evalExpr x _p) /. (evalExpr y _p)
+                            | "+" -> (evalExpr x _p) +. (evalExpr y _p)
+                            | "-" -> (evalExpr x _p) -. (evalExpr y _p)
+                            | "&&" -> if((evalExpr x _p) != 0. && (evalExpr y _p) != 0.) then 1. else 0.
+                            | "||" -> if((evalExpr x _p) != 0. || (evalExpr y _p) != 0.) then 1. else 0.
+                            | "==" -> if((evalExpr x _p) = (evalExpr y _p)) then 1. else 0.
+                            | "!=" -> if((evalExpr x _p) = (evalExpr y _p)) then 0. else 1.
+                            | ">=" -> if((evalExpr x _p) >= (evalExpr y _p)) then 1. else 0.
+                            | "<=" -> if((evalExpr x _p) <= (evalExpr y _p)) then 1. else 0.
+                            | ">" -> if((evalExpr x _p) > (evalExpr y _p)) then 1. else 0.
+                            | "<" -> if((evalExpr x _p) < (evalExpr y _p)) then 1. else 0.
                             | _ -> 0.0 )
         | Math(str, x, ")") -> 
                         (match str with
-                            | "s(" -> (sin (evalExpr x _q))
-                            | "c(" -> (cos (evalExpr x _q))
-                            | "e(" -> (exp (evalExpr x _q))
-                            | "l(" -> (log (evalExpr x _q))
+                            | "s(" -> (sin (evalExpr x _p))
+                            | "c(" -> (cos (evalExpr x _p))
+                            | "e(" -> (exp (evalExpr x _p))
+                            | "l(" -> (log (evalExpr x _p))
                             | _ -> 0.0 )
-        | Fct(str, [x]) -> evalFct str [x] _q
+        | Fct(str, [x]) -> evalFct str [x] _p
         | _ -> 0.0 (*some kind of error here*);;
 
 (* Test for expression *)
@@ -146,26 +146,50 @@ let pop lst = match lst with
     | _::tl -> tl ;;
 
 
-let evalAssign (_v: string) (_e: expr) (_pS: progState): envQueue = 
-    let e = evalExpr _e _q in
-        [[VarPair(_v, e)]] @ _q
+let defFct (_str: string) (_params: string list) (_code: statement list) (_p): progState = 
+    [[FctPair(_str, _params, _code)]] @ _p ; Nothing
 
-let rec evalStatement (s: statement) (_pS: progState): progState =
+
+let evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
+    let e = evalExpr _e _p in match _p with
+        | State(state, _q) -> match state with
+            | Normal -> State(Normal, [[VarPair(_v, e)]] @ _q)
+            | _ -> State(state, _q)
+        | _ -> Nothing
+
+let rec evalStatement (s: statement) (p: progState): progState =
     match s with 
-        | Assign(_v, _e) -> evalAssign _v _e q
-        | Return(e) -> q (*evalExpr e q *) (*idk*)
-        | Expr(e) -> (print (evalExpr e q)); q 
-        | Print(str, x)-> print (evalExpr x q); q
+        | Assign(_v, _e) -> evalAssign _v _e p
+        (*| Return(e) -> Return(Num((evalExpr e p)))*)
+        | Expr(e) -> (match p with 
+                        | State(state, q) -> (match state with 
+                            | Normal -> print (evalExpr e p); State(Normal, q) 
+                            | _ -> State(state, q))
+                        | _ -> Nothing)
+        | Print(str, x)-> (match p with 
+                        | State(state, q) -> (match state with 
+                            | Normal -> print (evalExpr x p); p
+                            | _ -> p)
+                        | _ -> Nothing)
+        | Break -> (match p with
+                        | State(state, q) -> State(Break, q)
+                        | _ -> Nothing)
+        | Continue -> (match p with
+                        | State(state, q) -> State(Continue, q)
+                        | _ -> Nothing)
         | If(e, codeT, codeF) -> 
-            let cond = evalExpr e q in
+            let cond = evalExpr e p in
                 if(cond>0.0) then
-                    evalCode codeT q 
+                    evalCode codeT p 
                 else
-                    evalCode codeF q
-        | While(e, code) -> evalWhile e code q
-        | For(int, bool, inc, code) ->  let que = evalStatement int q in
+                    evalCode codeF p
+        | While(e, code) -> (*(match p with
+                                | Normal -> evalWhile e code p
+                                | Break -> evalWhile Num(-1) [] State(Normal, _q)
+                                | Continue -> )*) evalWhile e code p
+        (*| For(int, bool, inc, code) ->  let que = evalStatement int p in
                                             evalFor bool inc code que
-        | FctDef(str, params, code) -> defFct str params code q 
+        (*| FctDef(str, params, code) -> defFct str params code q *)
         (*| _ -> q (*ignore *) (*throw error here *)*)
         and evalFor (_bool: expr) (_inc: statement) (_code: statement list) (_pS: progState): envQueue = 
             let cond = evalExpr _bool _q in
@@ -174,30 +198,35 @@ let rec evalStatement (s: statement) (_pS: progState): progState =
                         let que = evalStatement _inc q in
                             evalFor _bool _inc _code que
                 else
-                     _q
+                     _q*)
+            
+        and evalWhile (_e: expr) (_code: statement list) (_p: progState): progState =
+        let cond = evalExpr _e _p in
+            if(cond>0.) then
+                let q = evalCode _code _p in 
+                    match q with
+                        | State(state, _q) -> match state with
+                            | Break -> evalWhile (Num(-1.)) [] (State(Normal, _q))
+                            | _ -> evalWhile _e _code _p
+            else
+                _p
 
-
-    and eval_states (_pS: progState) (code: block): progState = match _pS with
+        and eval_states (_pS: progState) (code: block): progState = match _pS with
         | State(state,_q) -> match state with
-            | Normal -> match code with 
+            | Normal -> (match code with 
                 | [] -> let newQ = pop _q in State(state,newQ)   (* pop the local environment *)
-                | a::tl -> let ret = evalStatement a _pS in eval_states ret tl;
-            | _ -> _pS;;
+                | a::tl -> let ret = evalStatement a _pS in eval_states ret tl;)
+            | _ -> _pS
 
-
-    and evalCode (_code: block) (_pS: progState): progState = match _pS with
+        and evalCode (_code: block) (_pS: progState): progState = match _pS with
         | State(state,_q) ->
             let que = [[]] @ _q in           (* create new environment *)
                 eval_states (State(state,que)) _code ;; 
 
+    
 
-    and evalWhile (_e: expr) (_code: statement list) (_pS: progState): envQueue =
-        let cond = evalExpr _e _q in
-            if(cond>0.) then
-                let q = evalCode _code _q in 
-                    evalWhile _e _code q
-            else
-                _q;;
+    
+
 
 (* 
     v = 10; 
@@ -277,14 +306,26 @@ let p2: block = [
         5.      
     |}]*)*)
 
+let whileBlockTest1 = [Assign("i", Num(3.)); 
+                       While(Op2("!=", Var("i"), Num(4.)), [Print("print", Op2("+", Num(10.), Var("i")));
+                                                            Assign("i", (Op1("++", Var("i"))));
+                                                            Print("print", Var("i"))])]
+
+let whileBlockTest2 = [Assign(("i"), Op2("-", Num(5.), Num(4.)));
+                        While(Op2("<", Var("i"), Num(10.)), [Assign("i", (Op1("++", Var("i"))));
+                                                             (*Continue;
+                                                             Assign("i", (Op1("--", Var("i"))))*)])]
+
+
+
 
 
 let testEnv = [[VarPair("x", 1.); VarPair("y", 2.); VarPair("z", 3.)]]
 
-let test = evalStatement (Assign("z", Num(5.))) []
+(*let test = evalStatement (Assign("z", Num(5.))) []
 
-let test2 = evalStatement (Assign("z", Num(8.))) []
+let test2 = evalStatement (Assign("z", Num(8.))) []*)
 
-let testBlock = [(Assign("i", Num(1.)); Expr(Op2("+", Var("i"), Num(2.))) )]
-(* 
-let main = evalStatement testBlock [] *)
+let testBlock = [ Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
+
+let main = evalCode whileBlockTest1 (State(Normal, testEnv))
