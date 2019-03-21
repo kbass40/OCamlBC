@@ -1,7 +1,5 @@
 (*open Core*)
 
-(* Initialize the stack to hold type Hashtbl *)
-
 type statRet =
     | Normal
     | Break
@@ -35,7 +33,7 @@ type statement =                                      (*Statement: Call that do 
     | For of statement*expr*statement*statement list  (*For*)
     | FctDef of string * string list * statement list (*Def a function*)
     | Break
-    | Continue
+    | Continue;;
 
 type sPair =
     | Nothing  
@@ -80,17 +78,17 @@ let rec search_que (_s: string) (_pS: progState): float = match _pS with
     | FctPair(str,flt) -> if (compare str _s = 0) then flt else 0.
     | _ -> 0.;; *)
 
-(*let rec search_env_fct (_s: string) (_e: env): sPair = match _e with
+let rec search_env_fct (_s: string) (_e: env): sPair = (match _e with
     | [] -> Nothing
     | a::tl -> (match a with 
         | FctPair(name,param,code)   -> if (compare name _s = 0) then (FctPair(name,param,code)) else (search_env_fct _s tl)
-        | _ -> Nothing) ;;*)
-
-(*let rec search_que_fct (_s: string) (_pS: progState): FctPair = match _pS with 
+        | _ -> Nothing) );;
+                                                              
+(* let rec search_que_fct (_s: string) (_pS: progState): sPair = (match _pS with 
     | State(state,_q) ->
         (match _q with
-            | [] -> 0.
-            | a::tl -> if ((search_env _s a) = 0.) then (search_que _s (State(Normal,tl))) else (  search_env _s a));;*)
+            | [] -> Nothing
+            | a::tl -> if ((search_env _s a) = 0.) then (search_que _s (State(Normal,tl))) else (  search_env _s a)));; *)
 
 
 let varEval (_v: string) (_p: progState): float = search_que _v _p;; 
@@ -99,7 +97,15 @@ let varEval (_v: string) (_p: progState): float = search_que _v _p;;
     | State(state,_q) ->
         ;;*)
 
-let evalFct (_v: string) (_e: expr list) (_pS: progState) = 0.0;;
+(* let assignParams (_params: string*list) (_e: env): env =  *)
+
+let evalFct (_v: string) (_e: expr list) (_pS: progState): float = 0.(*(match _pS with
+    | State(s, _q) -> match _q with
+        | [] -> 0.
+        | a::tl -> let pair = search_env_fct _v a in match pair with 
+            | FctPair(name,param,code) -> 
+                let q = [[]] @ _q in *);;
+
 
 
 let rec evalExpr (_e: expr) (_p: progState): float  = 
@@ -203,7 +209,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
         | While(e, code) -> evalWhile e code p
         | For(int, bool, inc, code) ->  let que = evalStatement int p in
                                             evalFor bool inc code que
-        | FctDef(str, params, code) -> defFct str params code p
+        (* | FctDef(str, params, code) -> defFct str params code p *)
         (*| _ -> q (*ignore *) (*throw error here *)*)
         and evalFor (_bool: expr) (_inc: statement) (_code: statement list) (_pS: progState): progState = 
             let cond = evalExpr _bool _pS in
@@ -239,9 +245,8 @@ let rec evalStatement (s: statement) (p: progState): progState =
             | _ -> _pS)
 
         and evalCode (_code: block) (_pS: progState): progState = match _pS with
-        | State(state,_q) ->
-            let que = [[]] @ _q in           (* create new environment *)
-                eval_states (State(state,que)) _code ;; 
+        | State(state,_q) -> eval_states (State(state,_q)) _code 
+        | _ -> _pS;; 
 
     
 
