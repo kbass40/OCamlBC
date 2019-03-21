@@ -121,7 +121,7 @@ let pop lst = match lst with
     | [] -> []
     | _::tl -> tl
 
-let evalCode (_code: block) (_q: envQueue): envQueue = _q
+let evalCode (_code: block) (_q: envQueue): statRet = Normal
     (* crate new environment *)
     (*let que = [[]] @ _q in *)
         (* let rec eval_states que block: envQue =
@@ -138,28 +138,28 @@ let evalCode (_code: block) (_q: envQueue): envQueue = _q
 
 
 
-let defFct (_str: string) (_params: string list) (_code: statement list) (_q: envQueue): envQueue = 
-    [[FctPair(_str, _params, _code)]] @ _q
+let defFct (_str: string) (_params: string list) (_code: statement list) (_q: envQueue): statRet = 
+    [[FctPair(_str, _params, _code)]] @ _q; Normal
 
 
-let rec evalWhile(_e: expr) (_code: statement list) (_q: envQueue): envQueue =
+let rec evalWhile(_e: expr) (_code: statement list) (_q: envQueue): statRet =
     let cond = evalExpr _e _q in
         if(cond>0.) then
             let q = evalCode _code _q in 
                 evalWhile _e _code q
         else
-            _q
+            Normal
 
-let evalAssign (_v: string) (_e: expr) (_q: envQueue): envQueue = 
+let evalAssign (_v: string) (_e: expr) (_q: envQueue): statRet = 
     let e = evalExpr _e _q in
         [[VarPair(_v, e)]] @ _q
 
-let rec evalStatement (s: statement) (q: envQueue): envQueue =
+let rec evalStatement (s: statement) (q: envQueue): statRet =
     match s with 
-        | Assign(_v, _e) -> evalAssign _v _e q
-        | Return(e) -> q (*evalExpr e q *) (*idk*)
-        | Expr(e) -> (print (evalExpr e q)); q 
-        | Print(str, x)-> print (evalExpr x q); q
+        | Assign(_v, _e) -> evalAssign _v _e Normal
+        | Return(e) -> Return(evalExpr e q)
+        | Expr(e) -> (print (evalExpr e q)); Normal 
+        | Print(str, x)-> print (evalExpr x q); Normal
         | If(e, codeT, codeF) -> 
             let cond = evalExpr e q in
                 if(cond>0.0) then
@@ -269,4 +269,4 @@ let test2 = evalStatement (Assign("z", Num(8.))) []
 
 let testBlock = [(Assign("i", Num(1.)); Expr(Op2("+", Var("i"), Num(2.))) )]
 
-let main = evalStatement testBlock []
+(*let main = evalStatement testBlock []*)
