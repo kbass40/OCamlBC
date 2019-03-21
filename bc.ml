@@ -1,18 +1,14 @@
 (*open Core*)
 
-let globalScope = Stack.create ();;
-let ht = Hashtbl.create 123456;;
-Hashtbl.add ht "x" 0.;;
-
 (* Initialize the stack to hold type Hashtbl *)
-Stack.push ht globalScope;;
-Stack.pop globalScope;;
 
 type statRet =
     | Normal
     | Break
     | Continue
     | Return of float;;
+
+
 
 let prints (s : string) = Printf.printf "%s\n" s;;
 let print (s : float) = Printf.printf "%f\n" s;;
@@ -29,12 +25,6 @@ type expr =                         (*The sometype for expressions*)
     | Op2 of string*expr*expr       (*Binary Operator*)
     | Math of string*expr*string    (*Math operators*)
     | Fct of string * expr list     (*Function*);;
-
-type progState = 
-    | Normal    (*Do nothing*) 
-    | Break     (*STOP*) 
-    | Continue  (*Goto next iteration*) 
-    | Return    (*Send Float*);;
 
 type statement =                                      (*Statement: Call that do stuff lol*)
     | Assign of string*expr                           (*Assignment: Assigns a var to a value*)
@@ -63,6 +53,10 @@ type block = statement list;;
 type env = sPair list;;
 
 type envQueue = env list;;
+
+type progState = 
+    | Nothing
+    | State of stateRet * envQueue;;
 
 let get_pair_var (_s: string) (_pair: sPair): float = match _pair with
     | VarPair(str,flt) -> if (compare str _s = 0) then flt else 0.
@@ -167,7 +161,7 @@ let rec evalStatement (s: statement) (q: envQueue): envQueue =
     and evalCode (_code: block) (_q: envQueue): envQueue = 
         let que = [[]] @ _q in           (* create new environment *)
             eval_states que _code  
-    and evalWhile(_e: expr) (_code: statement list) (_q: envQueue): envQueue =
+    and evalWhile (_e: expr) (_code: statement list) (_q: envQueue): envQueue =
         let cond = evalExpr _e _q in
             if(cond>0.) then
                 let q = evalCode _code _q in 
