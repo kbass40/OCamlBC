@@ -183,8 +183,8 @@ let rec evalStatement (s: statement) (p: progState): progState =
                 let q = evalCode _code _p in 
                     match q with
                         | State(state, _q) -> match state with
-                            | Break -> evalWhile (Num(-1.)) [] (State(Normal, _q))
-                            | _ -> evalWhile _e _code _p
+                            | Break -> evalWhile (Num(-1.)) [] q
+                            | _ -> evalWhile _e _code q
             else
                 _p
 
