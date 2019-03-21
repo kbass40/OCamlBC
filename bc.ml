@@ -39,9 +39,12 @@ type statement =                                      (*Statement: Call that do 
     | While of expr*statement list                    (*While*)
     | For of statement*expr*statement*statement list  (*For*)
     | FctDef of string * string list * statement list (*Def a function*)
+    | Break
+    | Continue
 
 type sPair =
-    | Nothing                        
+    | Nothing  
+    | Ret of statRet                    
     | VarPair of string * float                              (*Used to capture variable pairs*)
     | FctPair of string * string list * statement list       (*used to store funtions*)
 
@@ -175,7 +178,7 @@ let rec evalStatement (s: statement) (q: envQueue): envQueue =
                         let que = evalStatement _inc q in
                             evalFor _bool _inc _code que
                 else
-                     _q
+                    _q
 
 
 (* 
@@ -264,4 +267,6 @@ let test = evalStatement (Assign("z", Num(5.))) []
 
 let test2 = evalStatement (Assign("z", Num(8.))) []
 
-let main = evalStatement (Expr(Var("z"))) test2
+let testBlock = [(Assign("i", Num(1.)); Expr(Op2("+", Var("i"), Num(2.))) )]
+
+let main = evalStatement testBlock []
