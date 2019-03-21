@@ -1,6 +1,5 @@
 (*open Core*)
 
-(* Initialize the stack to hold type Hashtbl *)
 
 type statRet =
     | Normal
@@ -163,7 +162,7 @@ let evalAssign (_v: string) (_e: expr) (_p: progState): progState =
     let e = evalExpr _e _p in match _p with
         | State(state, _q) -> match state with
             | Normal -> (match _q with 
-                            | a::tl -> State(Normal, ([[VarPair(_v, e)] @ a] @ _q)))
+                            | a::tl -> State(Normal, ([[VarPair(_v, e)] @ a] @ (pop _q))))
             | _ -> State(state, _q)
         | _ -> Nothing
 
@@ -183,7 +182,9 @@ let rec evalStatement (s: statement) (p: progState): progState =
                         | State(state, q) -> State(Continue, q)
                         | _ -> Nothing)
         | Assign(_v, _e) -> evalAssign _v _e p
-        (*| Return(e) -> Return(Num((evalExpr e p)))*)
+        | Return(e) -> (match p with
+                        | State(state, q) ->State((Return((evalExpr e p))), q)
+                        | _ -> p)
         | Expr(e) -> (match p with 
                         | State(state, q) -> (match state with 
                             | Normal -> print (evalExpr e p); State(Normal, q) 
@@ -203,7 +204,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
         | While(e, code) -> evalWhile e code p
         | For(int, bool, inc, code) ->  let que = evalStatement int p in
                                             evalFor bool inc code que
-        | FctDef(str, params, code) -> defFct str params code p
+        (*| FctDef(str, params, code) -> defFct str params code p*)
         (*| _ -> q (*ignore *) (*throw error here *)*)
         and evalFor (_bool: expr) (_inc: statement) (_code: statement list) (_pS: progState): progState = 
             let cond = evalExpr _bool _pS in
