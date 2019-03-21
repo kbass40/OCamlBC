@@ -30,15 +30,6 @@ type expr =                         (*The sometype for expressions*)
     | Math of string*expr*string    (*Math operators*)
     | Fct of string * expr list     (*Function*)
 
-type sPair =
-    | Nothing                        
-    | VarPair of string * float                              (*Used to capture variable pairs*)
-    (*| FctPair of string * string list * statement list       (*used to store funtions*)*)
-
-let get_pair_val (_pair: sPair): float = match _pair with
-    | VarPair(str,flt) -> flt
-    | _ -> 0.;;
-
 type statement =                                      (*Statement: Call that do stuff lol*)
     | Assign of string*expr                           (*Assignment: Assigns a var to a value*)
     | Print of string*expr                            (*Print*)
@@ -48,6 +39,15 @@ type statement =                                      (*Statement: Call that do 
     | While of expr*statement list                    (*While*)
     | For of statement*expr*statement*statement list  (*For*)
     | FctDef of string * string list * statement list (*Def a function*)
+
+type sPair =
+    | Nothing                        
+    | VarPair of string * float                              (*Used to capture variable pairs*)
+    | FctPair of string * string list * statement list       (*used to store funtions*)
+
+let get_pair_val (_pair: sPair): float = match _pair with
+    | VarPair(str,flt) -> flt
+    | _ -> 0.;;
 
 type block = statement list 
 
@@ -120,7 +120,7 @@ let pop lst = match lst with
 
 let evalCode (_code: block) (_q: envQueue): envQueue = _q
     (* crate new environment *)
-    (*let que = [[]] @ _q in ()*)
+    (*let que = [[]] @ _q in *)
         (* let rec eval_states que block: envQue =
             | [] -> que
             | a::tl -> match [a] with 
@@ -135,7 +135,8 @@ let evalCode (_code: block) (_q: envQueue): envQueue = _q
 
 
 
-let defFct (_str: string) (_params: string list) (_code: statement list) (_q: envQueue) = 0.0
+let defFct (_str: string) (_params: string list) (_code: statement list) (_q: envQueue): envQueue = 
+    [[FctPair(_str, _params, _code)]] @ _q
 
 
 let rec evalWhile(_e: expr) (_code: statement list) (_q: envQueue): envQueue =
@@ -162,12 +163,10 @@ let rec evalStatement (s: statement) (q: envQueue): envQueue =
                     evalCode codeT q 
                 else
                     evalCode codeF q
-            ;q (*i think something goes here *)
         | While(e, code) -> evalWhile e code q
         | For(int, bool, inc, code) ->  let que = evalStatement int q in
                                             evalFor bool inc code que
         | FctDef(str, params, code) -> defFct str params code q 
-            ;q
         (*| _ -> q (*ignore *) (*throw error here *)*)
         and evalFor (_bool: expr) (_inc: statement) (_code: statement list) (_q: envQueue): envQueue = 
             let cond = evalExpr _bool _q in
@@ -265,4 +264,4 @@ let test = evalStatement (Assign("z", Num(5.))) []
 
 let test2 = evalStatement (Assign("z", Num(8.))) []
 
-let main = evalStatement (Expr(Var("z"))) test2; evalStatement (Print("print", Var("z"))) test
+let main = evalStatement (Expr(Var("z"))) test2
