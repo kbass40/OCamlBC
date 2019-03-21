@@ -8,8 +8,7 @@ type statRet =
     | Continue
     | Return of float;;
 
-
-
+    
 let prints (s : string) = Printf.printf "%s\n" s;;
 let print (s : float) = Printf.printf "%f\n" s;;
 
@@ -56,7 +55,7 @@ type envQueue = env list;;
 
 type progState = 
     | Nothing
-    | State of stateRet * envQueue;;
+    | State of statRet * envQueue;;
 
 let get_pair_var (_s: string) (_pair: sPair): float = match _pair with
     | VarPair(str,flt) -> if (compare str _s = 0) then flt else 0.
@@ -66,13 +65,15 @@ let rec search_env (_s: string) (_e: env): float = match _e with
     | [] -> 0.
     | a::tl -> if ((get_pair_var _s a) == (get_pair_val a)) then (get_pair_val a) else search_env _s tl ;; 
 
-let rec search_que (_s: string) (_q: envQueue): float = match _q with
-    | [] -> 0.
-    | a::tl -> if ((search_env _s a) = 0.) then ( search_que _s tl) else (  search_env _s a);;
+let rec search_que (_s: string) (_pS: progState): float = match _pS with 
+    | State(state,_q) ->
+        match _q with
+            | [] -> 0.
+            | a::tl -> if ((search_env _s a) = 0.) then (search_que _s (State(Normal,tl))) else (  search_env _s a);;
 
 let varEval (_v: string) (_p: progState): float = search_que _v _p;; 
 
-let evalFct (_v: string) (_e: expr list) (_q: envQueue) = 0.0;;
+let evalFct (_v: string) (_e: expr list) (_pS: progState) = 0.0;;
 
 let rec evalExpr (_e: expr) (_p: progState): float  = 
     match _e with 
@@ -147,27 +148,42 @@ let rec evalStatement (s: statement) (p: progState): progState =
                                             evalFor bool inc code que
         | FctDef(str, params, code) -> defFct str params code q 
         (*| _ -> q (*ignore *) (*throw error here *)*)
-        and evalFor (_bool: expr) (_inc: statement) (_code: statement list) (_q: envQueue): envQueue = 
+        and evalFor (_bool: expr) (_inc: statement) (_code: statement list) (_pS: progState): envQueue = 
             let cond = evalExpr _bool _q in
                 if(cond>0.) then
                     let q = evalCode _code _q in 
                         let que = evalStatement _inc q in
                             evalFor _bool _inc _code que
                 else
-                     _p
-    and eval_states (q: envQueue) (code: block): envQueue = match code with 
-        | [] -> pop q            (* pop the local environment *)
-        | a::tl -> evalStatement a q; eval_states q tl
-    and evalCode (_code: block) (_q: envQueue): envQueue = 
-        let que = [[]] @ _q in           (* create new environment *)
-            eval_states que _code  
-    and evalWhile (_e: expr) (_code: statement list) (_q: envQueue): envQueue =
-        let cond = evalExpr _e _q in
+                     _q
+            
+        and evalWhile (_e: expr) (_code: statement list) (_p: progState): progState =
+        let cond = evalExpr _e _p in
             if(cond>0.) then
-                let q = evalCode _code _q in 
-                    evalWhile _e _code q
+                let q = evalCode _code _p in 
+                    match _p with
+                        | State(state, _q) -> match state with
+                            | Break -> evalWhile Num(-1) [] State(Normal, _q)
+                            | _ -> evalWhile _e _code p
             else
-                _q;;
+                _p
+
+        and eval_states (_pS: progState) (code: block): progState = match _pS with
+        | State(state,_q) -> match state with
+            | Normal -> match code with 
+                | [] -> let newQ = pop _q in State(state,newQ)   (* pop the local environment *)
+                | a::tl -> let ret = evalStatement a _pS in eval_states ret tl;
+            | _ -> _pS
+
+        and evalCode (_code: block) (_pS: progState): progState = match _pS with
+        | State(state,_q) ->
+            let que = [[]] @ _q in           (* create new environment *)
+                eval_states (State(Normal,que)) _code ;; 
+
+    
+
+    
+
 
 (* 
     v = 10; 
