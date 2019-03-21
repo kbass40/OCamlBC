@@ -178,7 +178,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
         and evalCode (_code: block) (_pS: progState): progState = match _pS with
         | State(state,_q) ->
             let que = [[]] @ _q in           (* create new environment *)
-                eval_states (State(Normal,que)) _code ;; 
+                eval_states (State(state,que)) _code ;; 
 
     
 
