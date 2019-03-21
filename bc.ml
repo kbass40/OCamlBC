@@ -95,8 +95,8 @@ let rec evalExpr (_e: expr) (_p: progState): float  =
                             | "-" -> (evalExpr x _p) -. (evalExpr y _p)
                             | "&&" -> if((evalExpr x _p) != 0. && (evalExpr y _p) != 0.) then 1. else 0.
                             | "||" -> if((evalExpr x _p) != 0. || (evalExpr y _p) != 0.) then 1. else 0.
-                            | "==" -> if((evalExpr x _p) == (evalExpr y _p)) then 1. else 0.
-                            | "!=" -> if((evalExpr x _p) != (evalExpr y _p)) then 1. else 0.
+                            | "==" -> if((evalExpr x _p) = (evalExpr y _p)) then 1. else 0.
+                            | "!=" -> if((evalExpr x _p) = (evalExpr y _p)) then 0. else 1.
                             | ">=" -> if((evalExpr x _p) >= (evalExpr y _p)) then 1. else 0.
                             | "<=" -> if((evalExpr x _p) <= (evalExpr y _p)) then 1. else 0.
                             | ">" -> if((evalExpr x _p) > (evalExpr y _p)) then 1. else 0.
@@ -130,7 +130,7 @@ let defFct (_str: string) (_params: string list) (_code: statement list) (_p): p
 let evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
     let e = evalExpr _e _p in match _p with
         | State(state, _q) -> match state with
-            | Normal -> [[VarPair(_v, e)]] @ _q; State(Normal, _q)
+            | Normal -> State(Normal, [[VarPair(_v, e)]] @ _q)
             | _ -> State(state, _q)
         | _ -> Nothing
 
@@ -145,8 +145,8 @@ let rec evalStatement (s: statement) (p: progState): progState =
                         | _ -> Nothing)
         | Print(str, x)-> (match p with 
                         | State(state, q) -> (match state with 
-                            | Normal -> print (evalExpr x p); State(Normal, q)
-                            | _ -> State(state, q)) 
+                            | Normal -> print (evalExpr x p); p
+                            | _ -> p)
                         | _ -> Nothing)
         | Break -> (match p with
                         | State(state, q) -> State(Break, q)
@@ -283,6 +283,18 @@ let p2: block = [
         5.      
     |}]*)*)
 
+let whileBlockTest1 = [Assign("i", Num(3.)); 
+                       While(Op2("!=", Var("i"), Num(4.)), [Print("print", Op2("+", Num(10.), Var("i")));
+                                                            Assign("i", (Op1("++", Var("i"))));
+                                                            Print("print", Var("i"))])]
+
+let whileBlockTest2 = [Assign(("i"), Op2("-", Num(5.), Num(4.)));
+                        While(Op2("<", Var("i"), Num(10.)), [Assign("i", (Op1("++", Var("i"))));
+                                                             (*Continue;
+                                                             Assign("i", (Op1("--", Var("i"))))*)])]
+
+
+
 
 
 let testEnv = [[VarPair("x", 1.); VarPair("y", 2.); VarPair("z", 3.)]]
@@ -291,6 +303,6 @@ let testEnv = [[VarPair("x", 1.); VarPair("y", 2.); VarPair("z", 3.)]]
 
 let test2 = evalStatement (Assign("z", Num(8.))) []*)
 
-let testBlock = [( Assign("i", Num(1.)); Expr(Op2("+", Var("i"), Num(2.))) )]
+let testBlock = [ Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
 
-let main = evalCode testBlock (State(Normal, testEnv))
+let main = evalCode whileBlockTest1 (State(Normal, testEnv))
