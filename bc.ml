@@ -1,25 +1,21 @@
 (*open Core*)
 
-let globalScope = Stack.create ();;
-let ht = Hashtbl.create 123456;;
-Hashtbl.add ht "x" 0.;;
-
 (* Initialize the stack to hold type Hashtbl *)
-Stack.push ht globalScope;;
-Stack.pop globalScope;;
 
 type statRet =
     | Normal
     | Break
     | Continue
-    | Return of float
+    | Return of float;;
+
+
 
 let prints (s : string) = Printf.printf "%s\n" s;;
 let print (s : float) = Printf.printf "%f\n" s;;
 
 type sExpr = 
     | Atom of string
-    | List of sExpr list
+    | List of sExpr list;;
 
 type expr =                         (*The sometype for expressions*)
     | Paren of string*expr*string   (*Parens*)
@@ -28,7 +24,7 @@ type expr =                         (*The sometype for expressions*)
     | Op1 of string*expr            (*Unary Operator*)
     | Op2 of string*expr*expr       (*Binary Operator*)
     | Math of string*expr*string    (*Math operators*)
-    | Fct of string * expr list     (*Function*)
+    | Fct of string * expr list     (*Function*);;
 
 type statement =                                      (*Statement: Call that do stuff lol*)
     | Assign of string*expr                           (*Assignment: Assigns a var to a value*)
@@ -46,17 +42,21 @@ type sPair =
     | Nothing  
     | Ret of statRet                    
     | VarPair of string * float                              (*Used to capture variable pairs*)
-    | FctPair of string * string list * statement list       (*used to store funtions*)
+    | FctPair of string * string list * statement list       (*used to store funtions*);;
 
 let get_pair_val (_pair: sPair): float = match _pair with
     | VarPair(str,flt) -> flt
     | _ -> 0.;;
 
-type block = statement list 
+type block = statement list;;
 
-type env = sPair list (* complete *)
+type env = sPair list;;
 
-type envQueue = env list
+type envQueue = env list;;
+
+type progState = 
+    | Nothing
+    | State of stateRet * envQueue;;
 
 let get_pair_var (_s: string) (_pair: sPair): float = match _pair with
     | VarPair(str,flt) -> if (compare str _s = 0) then flt else 0.
@@ -70,9 +70,9 @@ let rec search_que (_s: string) (_q: envQueue): float = match _q with
     | [] -> 0.
     | a::tl -> if ((search_env _s a) = 0.) then ( search_que _s tl) else (  search_env _s a);;
 
-let varEval (_v: string) (_q: envQueue): float = search_que _v _q 
+let varEval (_v: string) (_q: envQueue): float = search_que _v _q;; 
 
-let evalFct (_v: string) (_e: expr list) (_q: envQueue) = 0.0
+let evalFct (_v: string) (_e: expr list) (_q: envQueue) = 0.0;;
 
 let rec evalExpr (_e: expr) (_q: envQueue): float  = 
     match _e with 
@@ -109,7 +109,7 @@ let rec evalExpr (_e: expr) (_q: envQueue): float  =
                             | "l(" -> (log (evalExpr x _q))
                             | _ -> 0.0 )
         | Fct(str, [x]) -> evalFct str [x] _q
-        | _ -> 0.0 (*some kind of error here*)
+        | _ -> 0.0 (*some kind of error here*);;
 
 (* Test for expression *)
 (*let%expect_test "evalNum" = 
@@ -119,42 +119,18 @@ let rec evalExpr (_e: expr) (_q: envQueue): float  =
 
 let pop lst = match lst with 
     | [] -> []
-    | _::tl -> tl
-
-let evalCode (_code: block) (_q: envQueue): statRet = Normal
-    (* crate new environment *)
-    (*let que = [[]] @ _q in *)
-        (* let rec eval_states que block: envQue =
-            | [] -> que
-            | a::tl -> match [a] with 
-                | Return(ex) -> evalExpr  *)
-
-    (* user fold_left  *)
-    (* pop the local environment *)
-    (*let scope = Stack.top globalScope in
-        let eval = evalStatement Assign("v" (Num(5))) scope*)
-    (*print_endline "does this do something?"*)
+    | _::tl -> tl ;;
 
 
+let defFct (_str: string) (_params: string list) (_code: statement list) (_q: envQueue): progState = 
+    [[FctPair(_str, _params, _code)]] @ _q ;;
 
 
-let defFct (_str: string) (_params: string list) (_code: statement list) (_q: envQueue): statRet = 
-    [[FctPair(_str, _params, _code)]] @ _q; Normal
-
-
-let rec evalWhile(_e: expr) (_code: statement list) (_q: envQueue): statRet =
-    let cond = evalExpr _e _q in
-        if(cond>0.) then
-            let q = evalCode _code _q in 
-                evalWhile _e _code q
-        else
-            Normal
-
-let evalAssign (_v: string) (_e: expr) (_q: envQueue): statRet = 
+let evalAssign (_v: string) (_e: expr) (_q: envQueue): progState = 
     let e = evalExpr _e _q in
         [[VarPair(_v, e)]] @ _q
 
-let rec evalStatement (s: statement) (q: envQueue): statRet =
+let rec evalStatement (s: statement) (q: envQueue): progState =
     match s with 
         | Assign(_v, _e) -> evalAssign _v _e Normal
         | Return(e) -> Return(evalExpr e q)
@@ -178,8 +154,20 @@ let rec evalStatement (s: statement) (q: envQueue): statRet =
                         let que = evalStatement _inc q in
                             evalFor _bool _inc _code que
                 else
-                    _q
-
+                     _q
+    and eval_states (q: envQueue) (code: block): envQueue = match code with 
+        | [] -> pop q            (* pop the local environment *)
+        | a::tl -> evalStatement a q; eval_states q tl
+    and evalCode (_code: block) (_q: envQueue): envQueue = 
+        let que = [[]] @ _q in           (* create new environment *)
+            eval_states que _code  
+    and evalWhile (_e: expr) (_code: statement list) (_q: envQueue): envQueue =
+        let cond = evalExpr _e _q in
+            if(cond>0.) then
+                let q = evalCode _code _q in 
+                    evalWhile _e _code q
+            else
+                _q;;
 
 (* 
     v = 10; 
