@@ -155,16 +155,24 @@ let toNormal (p: progState): progState =
         | State(s, q) -> State(Normal, q)
         | _ -> Nothing)
 
-let defFct (_str: string) (_params: string list) (_code: statement list) (_p): progState = 
-    [[FctPair(_str, _params, _code)]] @ _p ; Nothing
+(*let defFct (_str: string) (_params: string list) (_code: statement list) (_p: progState): progState = 
+    State(Normal, [[FctPair(_str, _params, _code)]] @ _p) *)
 
 
 let evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
     let e = evalExpr _e _p in match _p with
         | State(state, _q) -> match state with
-            | Normal -> State(Normal, [[VarPair(_v, e)]] @ _q)
+            | Normal -> (match _q with 
+                            | a::tl -> State(Normal, ([[VarPair(_v, e)] @ a] @ _q)))
             | _ -> State(state, _q)
         | _ -> Nothing
+
+(*let evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
+    let e = evalExpr _e _p in match _p with
+        | State(state, _q) -> match state with
+            | Normal -> State(Normal, [[VarPair(_v, e)]] @ _q)
+            | _ -> State(state, _q)
+        | _ -> Nothing *)
 
 let rec evalStatement (s: statement) (p: progState): progState = 
     match s with 
@@ -195,7 +203,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
         | While(e, code) -> evalWhile e code p
         | For(int, bool, inc, code) ->  let que = evalStatement int p in
                                             evalFor bool inc code que
-        (*| FctDef(str, params, code) -> defFct str params code q *)
+        | FctDef(str, params, code) -> defFct str params code p
         (*| _ -> q (*ignore *) (*throw error here *)*)
         and evalFor (_bool: expr) (_inc: statement) (_code: statement list) (_pS: progState): progState = 
             let cond = evalExpr _bool _pS in
@@ -203,7 +211,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
                     let pS = evalCode _code _pS in 
                         (match pS with
                             | State(state, _q) -> (match state with
-                                | Break -> evalFor (Num(-1.)) _inc [] pS
+                                | Break -> (State(Normal, _q))
                                 | Continue -> let que = evalStatement _inc _pS in 
                                         evalFor _bool _inc _code (toNormal que)
                                 | _ ->  let que = evalStatement _inc pS in
@@ -217,7 +225,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
                 let q = evalCode _code _p in 
                     (match q with
                         | State(state, _q) -> match state with
-                            | Break -> evalWhile (Num(-1.)) [] q
+                            | Break -> (State(Normal, _q))
                             | Continue -> evalWhile _e _code (State(Normal, _q))
                             | _ -> evalWhile _e _code q)
             else
@@ -330,12 +338,19 @@ let whileBlockTest2 = [Assign(("i"), Op2("-", Num(5.), Num(4.)));
                                                              Assign("i", (Op1("--", Var("i"))));
                                                              Print("print", Var("i"));])]
 
+let whileBlockTest3 = [While((Op2("<", Var("i"), Num(5.))), [While((Op2("<", Var("j"), Num(3.))), 
+                                                            [Print("print", Var("j")); Assign("j", (Op1("++", Var("j"))))]);
+                                                            Assign("j", Num(1.0));
+                                                            Assign("i", (Op1("++", Var("i"))))])]
+
 let forBlockTest1 = [For((Assign("i", Num(1.))), 
                         (Op2("<", Var("i"), Num(5.))), 
                         (Assign("i", (Op1("++", Var("i"))))), 
-                        [Print("print", Var("i")); 
+                        [Print("print", Var("i"));
+                         Assign("v", Num(15.));
                          Continue;
-                         Print("print", Num(69.))]); Print("print", Var("i"))]
+                         Print("print", Num(69.))]); Print("print", Var("i"));
+                                                     Print("print", Var("v"))]  (*Loop scoping? woo? *)
 
 
 
@@ -349,4 +364,4 @@ let test2 = evalStatement (Assign("z", Num(8.))) []*)
 
 let testBlock = [ Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
 
-let main = evalCode forBlockTest1 (State(Normal, testEnv))
+let main = evalCode whileBlockTest3 (State(Normal, testEnv))
