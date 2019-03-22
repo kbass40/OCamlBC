@@ -154,8 +154,13 @@ let toNormal (p: progState): progState =
         | State(s, q) -> State(Normal, q)
         | _ -> Nothing)
 
-(*let defFct (_str: string) (_params: string list) (_code: statement list) (_p: progState): progState = 
-    State(Normal, [[FctPair(_str, _params, _code)]] @ _p) *)
+let defFct (_str: string) (_params: string list) (_code: statement list) (_p: progState): progState = 
+    match _p with
+        | State(s, q) -> match s with
+            | Normal -> (match q with 
+                            | a::tl -> State(Normal, ([[FctPair(_str, _params, _code)] @ a] @ (pop q))))
+            | _ -> State(s, q)
+        | _ -> Nothing
 
 
 let evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
@@ -204,7 +209,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
         | While(e, code) -> evalWhile e code p
         | For(int, bool, inc, code) ->  let que = evalStatement int p in
                                             evalFor bool inc code que
-        (*| FctDef(str, params, code) -> defFct str params code p*)
+        | FctDef(str, params, code) -> defFct str params code p
         (*| _ -> q (*ignore *) (*throw error here *)*)
         and evalFor (_bool: expr) (_inc: statement) (_code: statement list) (_pS: progState): progState = 
             let cond = evalExpr _bool _pS in
@@ -246,6 +251,10 @@ let rec evalStatement (s: statement) (p: progState): progState =
 
     
 
+
+let runCode (_code: block) = 
+    let env = evalCode _code (State(Normal, [])) in 
+        varEval "x" env
     
 
 
@@ -327,6 +336,20 @@ let p2: block = [
         5.      
     |}]*)*)
 
+let mathBlock = [Assign("v",(Op2("+", Var("v"), Num(5.))));
+                Expr(Math("s(", Num(1.), ")"));
+                Assign("v", Op1("++", Var("v")));
+                Assign("x", Var("v"));
+                Print("print", Var("x"));
+                Expr(Op2("==", Var("x"), Var("v")))]
+
+let boolBlock = [Assign("x", Num(5.));
+                Expr(Op2("==", Var("x"), Num(2.)));
+                Expr(Op1("!", Var("x")));
+                Expr(Op2(">=", Var("x"), Num(1.)));
+                Expr(Op2("<", Var("x"), Num(10.)))]
+
+
 let whileBlockTest1 = [Assign("i", Num(3.)); 
                        While(Op2("!=", Var("i"), Num(12.)), [Print("print", Op2("+", Num(10.), Var("i")));
                                                             Assign("i", (Op1("++", Var("i"))));
@@ -365,4 +388,4 @@ let test2 = evalStatement (Assign("z", Num(8.))) []*)
 
 let testBlock = [ Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
 
-let main = evalCode whileBlockTest3 (State(Normal, testEnv))
+let main = runCode boolBlock
