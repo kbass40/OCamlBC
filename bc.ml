@@ -300,14 +300,14 @@ let functionBlock2 = [Debug("Test 11: Add Function Test");Assign("x", Num(5.));
 
 let whileBlockTest1 = [Debug("Test 4: Basic While-Loop Test");Assign("i", Num(3.)); 
                        While(Op2("!=", Var("i"), Num(12.)), [Print("print", Op2("+", Num(10.), Var("i")));
-                                                            Assign("i", (Op1("++", Var("i"))))])]
+                                                            Assign("i", (Op1("++", Var("i"))))]);Debug("------Expect------\n\t13\n\t14\n\t15\n\t16\n\t17\n\t18\n\t19\n\t20\n\t21");]
 
 let whileBlockTest2 = [Debug("Test 5: While-Loop Test w/ Break and Continue");Assign(("i"), Op2("-", Num(5.), Num(4.)));
                         While(Op2("<", Var("i"), Num(10.)), [Assign("i", (Op1("++", Var("i"))));
                                                              Print("print", Var("i"));
                                                              If((Op2("==", Var("i"), Num(5.)), [Break], [Continue]));
                                                              Assign("i", (Op1("--", Var("i"))));
-                                                             Print("print", Var("i"));])]
+                                                             Print("print", Var("i"));]);Debug("------Expect------\n\t2\n\t3\n\t4\n\t5")]
 
 let whileBlockTest3 = [Debug("Test 6: Nested While-Loop Test");While((Op2("<", Var("i"), Num(5.))), [While((Op2("<", Var("j"), Num(3.))), 
                                                             [Print("print", Var("j")); Assign("j", (Op1("++", Var("j"))))]);
@@ -321,13 +321,13 @@ let forBlockTest1 = [Debug("Test 3: For-Loop Test");For((Assign("i", Num(1.))),
                          Assign("v", Num(15.));
                          Continue;
                          Print("print", Num(69.))]); Print("print", Var("i"));
-                                                     Print("print", Var("v"))]  
+                                                     Print("print", Var("v"));Debug("------Expect------\n\t1\n\t2\n\t3\n\t4\n\t5\n\t0");]  
                                                 
 let ifBlock = [Debug("Test 2: Conditional Test");If(Op2("==", Num(1.), Num(1.)), [Assign("x", Num(10.))], [Assign("x", Num(15.))]);
-                Print("print", Var("x"))]
+                Print("print", Var("x"));Debug("------Expect------\n\t10");]
 
 
-let testBlock = [Debug("Test 1: General Basic Functionality Test");Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
+let testBlock = [Debug("Test 1: General Basic Functionality Test");Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Debug("------Expect------\n\t2");Print("print", Op2("!=", Var("i"), Num(3.)));Debug("------Expect------\n\t1"); ]
 
 let blocks = [testBlock;ifBlock;forBlockTest1;whileBlockTest1;whileBlockTest2;whileBlockTest3;factorialBlock;functionBlock;boolBlock;mathBlock;functionBlock2];;
 
