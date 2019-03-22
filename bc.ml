@@ -55,10 +55,6 @@ type progState =
     | Nothing
     | State of statRet * envQueue;;
 
-
-(*let defFct (_str: string) (_params: string list) (_code: statement list) (_pS: progState): envQueue = 
-    [[FctPair(_str, _params, _code)]] @ _pS ;;*)
-
 let get_pair_var (_s: string) (_pair: sPair): float = match _pair with
     | VarPair(str,flt) -> if (compare str _s = 0) then flt else 0.
     | _ -> 0.;;
@@ -80,13 +76,7 @@ let rec search_env_fct (_s: string) (_e: env): sPair = (match _e with
     | a::tl -> (match a with 
         | FctPair(name,param,code)   -> if (compare name _s = 0) then (FctPair(name,param,code)) else (search_env_fct _s tl)
         | _ -> Nothing) );;
-                                                              
-(* let rec search_que_fct (_s: string) (_pS: progState): sPair = (match _pS with 
-    | State(state,_q) ->
-        (match _q with
-            | [] -> Nothing
-            | a::tl -> if ((search_env _s a) = 0.) then (search_que _s (State(Normal,tl))) else (  search_env _s a)));; *)
-
+                                                            
 
 let varEval (_v: string) (_p: progState): float = search_que _v _p;; 
 
@@ -125,14 +115,6 @@ let defFct (_str: string) (_params: string list) (_code: statement list) (_p: pr
                             | a::tl -> State(Normal, ([[FctPair(_str, _params, _code)] @ a] @ (pop q))))
             | _ -> State(s, q)
         | _ -> Nothing
-
-
-(*let evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
-    let e = evalExpr _e _p in match _p with
-        | State(state, _q) -> match state with
-            | Normal -> State(Normal, [[VarPair(_v, e)]] @ _q)
-            | _ -> State(state, _q)
-        | _ -> Nothing *)
 
 let rec evalStatement (s: statement) (p: progState): progState = 
     match s with 
@@ -276,10 +258,6 @@ let rec evalStatement (s: statement) (p: progState): progState =
 
     
 
-
-let runCode (_code: block) = 
-    let env = evalCode _code (State(Normal, [])) in 
-        varEval "x" env
     
 
 
@@ -292,12 +270,9 @@ let runCode (_code: block) =
         Assign("v", Num(1.0));
         Expr(Var("v")) 
 ];
-
 (*let%expect_test "p1" =
     evalCode p1 []; 
     [%expect {| 1. |}]
-
-
     v = 1.0;
     if (v>10.0) then
         v = v + 1.0
@@ -327,7 +302,6 @@ let p2: block = [
 (*let%expect_test "p1" =
     evalCode p2 []; 
     [%expect {| 3628800. |}]
-
   Fibbonaci sequence
     define f(x) {
         if (x<1.0) then
@@ -335,7 +309,6 @@ let p2: block = [
         else
             return (f(x-1)+f(x-2))
     }
-
     f(3)
     f(5)
  *)
@@ -353,13 +326,13 @@ let p2: block = [
         Expr(Fct("f", [Num(3.0)]));
         Expr(Fct("f", [Num(5.0)]));
     ];
-
 (*let%expect_test "p3" =
     evalCode p3 []; 
     [%expect {| 
         2. 
         5.      
     |}]*)*)
+
 
 let mathBlock = [Assign("v",(Op2("+", Var("v"), Num(5.))));
                 Expr(Math("s(", Num(1.), ")"));
@@ -373,7 +346,6 @@ let boolBlock = [Assign("x", Num(5.));
                 Expr(Op1("!", Var("x")));
                 Expr(Op2(">=", Var("x"), Num(1.)));
                 Expr(Op2("<", Var("x"), Num(10.)))]
-
 
 let whileBlockTest1 = [Assign("i", Num(3.)); 
                        While(Op2("!=", Var("i"), Num(12.)), [Print("print", Op2("+", Num(10.), Var("i")));
@@ -408,9 +380,8 @@ let forBlockTest1 = [For((Assign("i", Num(1.))),
 let testEnv = [[VarPair("x", 1.); VarPair("y", 2.); VarPair("z", 3.)]]
 
 (*let test = evalStatement (Assign("z", Num(5.))) []
-
 let test2 = evalStatement (Assign("z", Num(8.))) []*)
 
 let testBlock = [ Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
 
-let main = runCode boolBlock
+let main = evalCode whileBlockTest2 (State(Normal, testEnv))
