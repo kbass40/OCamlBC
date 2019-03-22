@@ -208,7 +208,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
         and assignParam (_v: string) (_expr: expr) (_e: env): env = [VarPair(_v,(evalExpr _expr (State( Normal, [_e]))))] @ _e
 
         and evalFct (_v: string) (_exprs: expr list) (_pS: progState): float = (match _pS with
-        | State(s, _q) -> match _q with
+        | State(s, _q) -> (match _q with
             | [] -> 0.
             | _e::tl -> let pair = search_que_fct _v _q in match pair with 
                 | FctPair(name,param,code) -> 
@@ -216,9 +216,9 @@ let rec evalStatement (s: statement) (p: progState): progState =
                         let newQ = [blockEnv] @ _q in
                             let localPS = State(s,newQ) in
                                 let finishedPS = evalCode code localPS in
-                                    let State(ret,que) = finishedPS in match ret with
+                                    let State(ret,que) = finishedPS in (match ret with
                                         | Return(retVal) -> retVal
-                                        | _ -> 0.)
+                                        | _ -> 0.))))
 
         and evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
             let e = evalExpr _e _p in match _p with
@@ -342,6 +342,9 @@ let p2: block = [
         5.      
     |}]*)*)
 
+let runCode (_block: block)= 
+    evalCode _block (State(Normal, [[]]))
+
 
 let mathBlock = [Assign("v",(Op2("+", Var("v"), Num(5.))));
                 Expr(Math("s(", Num(1.), ")"));
@@ -355,6 +358,16 @@ let boolBlock = [Assign("x", Num(5.));
                 Expr(Op1("!", Var("x")));
                 Expr(Op2(">=", Var("x"), Num(1.)));
                 Expr(Op2("<", Var("x"), Num(10.)))]
+
+let functionBlock = [Assign("y", Num(69.));
+                    FctDef("foo", ["x"], [Return(Var("y"))]);
+                    (*Expr(Fct("foo", [Return(5.)]));*)
+                    Assign("x", (Fct("foo", [Num(5.)])));
+                    Print("print", Var("x"))]
+
+let factorialBlock = [FctDef("factorial", ["n"], [If((Op2("==", Var("n"), Num(1.)), [(Return(Num(1.)))], 
+                                                                                    [Return(Op2("*", Var("n"), Fct("factorial", [Op1("--", Var("n"))])))]))]);
+                       Print("print", Fct("factorial", [Num(5.)]))]
 
 let whileBlockTest1 = [Assign("i", Num(3.)); 
                        While(Op2("!=", Var("i"), Num(12.)), [Print("print", Op2("+", Num(10.), Var("i")));
@@ -380,17 +393,13 @@ let forBlockTest1 = [For((Assign("i", Num(1.))),
                          Assign("v", Num(15.));
                          Continue;
                          Print("print", Num(69.))]); Print("print", Var("i"));
-                                                     Print("print", Var("v"))]  (*Loop scoping? woo? *)
+                                                     Print("print", Var("v"))]  
+                                                
+let ifBlock = [If(Op2("==", Num(1.), Num(1.)), [Assign("x", Num(10.))], [Assign("x", Num(15.))]);
+                Print("print", Var("x"))]
 
 
-
-
-
-let testEnv = [[VarPair("x", 1.); VarPair("y", 2.); VarPair("z", 3.)]]
-
-(*let test = evalStatement (Assign("z", Num(5.))) []
-let test2 = evalStatement (Assign("z", Num(8.))) []*)
 
 let testBlock = [ Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
 
-let main = evalCode whileBlockTest2 (State(Normal, testEnv))
+let main = runCode boolBlock
