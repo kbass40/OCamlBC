@@ -122,6 +122,7 @@ let defFct (_str: string) (_params: string list) (_code: statement list) (_p: pr
         | State(s, q) -> match s with
             | Normal -> (match q with 
                             | a::tl -> State(Normal, ([[FctPair(_str, _params, _code)] @ a] @ (pop q))))
+                            | _ -> _p
             | _ -> State(s, q)
         | _ -> Nothing
 
@@ -225,8 +226,9 @@ let rec evalStatement (s: statement) (p: progState): progState =
                 | State(state, _q) -> match state with
                     | Normal -> (match _q with 
                                     | a::tl -> State(Normal, ([[VarPair(_v, e)] @ a] @ (pop _q))))
+                                    | _ -> _p
                     | _ -> State(state, _q)
-                | _ -> Nothing
+                
                                         
         and evalExpr (_e: expr) (_p: progState): float  = 
             match _e with 
@@ -369,6 +371,12 @@ let factorialBlock = [FctDef("factorial", ["n"], [If((Op2("==", Var("n"), Num(1.
                                                                                     [Return(Op2("*", Var("n"), Fct("factorial", [Op1("--", Var("n"))])))]))]);
                        Print("print", Fct("factorial", [Num(5.)]))]
 
+let functionBlock2 = [Assign("x", Num(5.));
+                      FctDef("foo", ["x"; "y"], [Assign("x", Op2("+", Var("x"), Var("y")));
+                                                 Return(Var("x"))]);
+                      Assign("x", Fct("foo", [Num(20.)]));
+                      Print("print", Var("x"))]
+
 let whileBlockTest1 = [Assign("i", Num(3.)); 
                        While(Op2("!=", Var("i"), Num(12.)), [Print("print", Op2("+", Num(10.), Var("i")));
                                                             Assign("i", (Op1("++", Var("i"))));
@@ -402,4 +410,4 @@ let ifBlock = [If(Op2("==", Num(1.), Num(1.)), [Assign("x", Num(10.))], [Assign(
 
 let testBlock = [ Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
 
-let main = runCode boolBlock
+let main = runCode functionBlock2
