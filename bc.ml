@@ -38,8 +38,8 @@ type statement =                                      (*Statement: Call that do 
 type sPair =
     | Nothing  
     | Ret of statRet                    
-    | VarPair of string * float                              (*Used to capture variable pairs*)
-    | FctPair of string * string list * statement list       (*used to store funtions*);;
+    | VarPair of string * float                               (*Used to capture variable pairs*)
+    | FctPair of string * string list * statement list        (*used to store funtions*);;
 
 let get_pair_val (_pair: sPair): float = match _pair with
     | VarPair(str,flt) -> flt
@@ -71,12 +71,9 @@ let rec search_que (_s: string) (_pS: progState): float = match _pS with
     | State(state,_q) ->
         (match _q with
             | [] -> 0.
-            | a::tl -> if ((search_env _s a) = 0.) then (search_que _s (State(Normal,tl))) else (  search_env _s a));;
+            | a::tl -> if ((search_env _s a) = 0.) then (search_que _s (State(Normal,tl))) else (  search_env _s a))
+    | _ -> 0.;;
 
-
-(*let get_pair_fct (_s: string) (_pair: sPair): FctPair = match _pair with
-    | FctPair(str,flt) -> if (compare str _s = 0) then flt else 0.
-    | _ -> 0.;; *)
 
 let rec search_env_fct (_s: string) (_e: env): sPair = (match _e with
     | [] -> Nothing
@@ -93,67 +90,27 @@ let rec search_env_fct (_s: string) (_e: env): sPair = (match _e with
 
 let varEval (_v: string) (_p: progState): float = search_que _v _p;; 
 
-(*let evalFct (_v: string) (_code: block) (_pS: progState) = match _pS with 
-    | State(state,_q) ->
-        ;;*)
 
-(* let assignParams (_params: string*list) (_e: env): env =  *)
-
-let evalFct (_v: string) (_e: expr list) (_pS: progState): float = 0.(*(match _pS with
-    | State(s, _q) -> match _q with
-        | [] -> 0.
-        | a::tl -> let pair = search_env_fct _v a in match pair with 
-            | FctPair(name,param,code) -> 
-                let q = [[]] @ _q in *);;
+let pop lst = match lst with 
+    | [] -> []
+    | _::tl -> tl ;;
 
 
+let pip_str (lst: string list): string = match lst with 
+    | [] -> ""
+    | a::_ -> a ;;
 
-let rec evalExpr (_e: expr) (_p: progState): float  = 
-    match _e with 
-        | Num(x) -> x
-        | Var(x) -> varEval x _p
-        | Paren("(", x, ")") -> evalExpr x _p   
-        | Op1(str, x) -> 
-                        (match str with
-                            | "++" -> (evalExpr x _p) +. 1.
-                            | "--" -> (evalExpr x _p) -. 1.
-                            | "!" -> if ((evalExpr x _p) != 0.) then 0. else 1.
-                            | _ -> 0.0 )
-        | Op2(str, x, y) -> 
-                        (match str with
-                            | "^" -> (evalExpr x _p) ** (evalExpr y _p)
-                            | "*" -> (evalExpr x _p) *. (evalExpr y _p)
-                            | "/" -> (evalExpr x _p) /. (evalExpr y _p)
-                            | "+" -> (evalExpr x _p) +. (evalExpr y _p)
-                            | "-" -> (evalExpr x _p) -. (evalExpr y _p)
-                            | "&&" -> if((evalExpr x _p) != 0. && (evalExpr y _p) != 0.) then 1. else 0.
-                            | "||" -> if((evalExpr x _p) != 0. || (evalExpr y _p) != 0.) then 1. else 0.
-                            | "==" -> if((evalExpr x _p) = (evalExpr y _p)) then 1. else 0.
-                            | "!=" -> if((evalExpr x _p) = (evalExpr y _p)) then 0. else 1.
-                            | ">=" -> if((evalExpr x _p) >= (evalExpr y _p)) then 1. else 0.
-                            | "<=" -> if((evalExpr x _p) <= (evalExpr y _p)) then 1. else 0.
-                            | ">" -> if((evalExpr x _p) > (evalExpr y _p)) then 1. else 0.
-                            | "<" -> if((evalExpr x _p) < (evalExpr y _p)) then 1. else 0.
-                            | _ -> 0.0 )
-        | Math(str, x, ")") -> 
-                        (match str with
-                            | "s(" -> (sin (evalExpr x _p))
-                            | "c(" -> (cos (evalExpr x _p))
-                            | "e(" -> (exp (evalExpr x _p))
-                            | "l(" -> (log (evalExpr x _p))
-                            | _ -> 0.0 )
-        | Fct(str, [x]) -> evalFct str [x] _p
-        | _ -> 0.0 (*some kind of error here*);;
+
+let pip_expr (lst: expr list): expr = match lst with 
+    | [] -> Num(0.)
+    | a::_ -> a ;;
+
 
 (* Test for expression *)
 (*let%expect_test "evalNum" = 
     evalExpr (Num 10.0) [] |>
     printf "%F";
     [%expect {| 10. |}]*)
-
-let pop lst = match lst with 
-    | [] -> []
-    | _::tl -> tl ;;
 
 
 let toNormal (p: progState): progState = 
@@ -164,14 +121,6 @@ let toNormal (p: progState): progState =
 (*let defFct (_str: string) (_params: string list) (_code: statement list) (_p: progState): progState = 
     State(Normal, [[FctPair(_str, _params, _code)]] @ _p) *)
 
-
-let evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
-    let e = evalExpr _e _p in match _p with
-        | State(state, _q) -> match state with
-            | Normal -> (match _q with 
-                            | a::tl -> State(Normal, ([[VarPair(_v, e)] @ a] @ (pop _q))))
-            | _ -> State(state, _q)
-        | _ -> Nothing
 
 (*let evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
     let e = evalExpr _e _p in match _p with
@@ -239,16 +188,86 @@ let rec evalStatement (s: statement) (p: progState): progState =
             else
                 _p
 
-        and eval_states (_pS: progState) (code: block): progState = match _pS with
+        and eval_states (_pS: progState) (code: block): progState = (match _pS with
         | State(state,_q) -> (match state with
             | Normal -> (match code with 
-                | [] -> (*let newQ = pop _q in*) State(state,_q)   (* pop the local environment *)
+                | [] -> State(state,_q)
                 | a::tl -> let ret = evalStatement a _pS in eval_states ret tl;)
+            | Return(flt) -> State((Return(flt), (pop _q))) (* pop the local environment *)
             | _ -> _pS)
+        | _ -> _pS)
 
         and evalCode (_code: block) (_pS: progState): progState = match _pS with
         | State(state,_q) -> eval_states (State(state,_q)) _code 
-        | _ -> _pS;; 
+        | _ -> _pS
+
+        and assignParams (_params: string list) (_exprs: expr list) (_e: env): env = match _params with
+        | [] -> _e
+        | _ ->
+            let p = pip_str _params in 
+                let v = pip_expr _exprs in
+                    let newEnv = assignParam p v _e in
+                        assignParams (pop _params) (pop _exprs) newEnv
+
+        and assignParam (_v: string) (_expr: expr) (_e: env): env = [VarPair(_v,(evalExpr _expr (State( Normal, [_e]))))] @ _e
+
+        and evalFct (_v: string) (_exprs: expr list) (_pS: progState): float = (match _pS with
+        | State(s, _q) -> match _q with
+            | [] -> 0.
+            | _e::tl -> let pair = search_env_fct _v _e in match pair with 
+                | FctPair(name,param,code) -> 
+                    let blockEnv = assignParams param _exprs _e in
+                        let newQ = [blockEnv] @ _q in
+                            let localPS = State(s,newQ) in
+                                let finishedPS = evalCode code localPS in
+                                    let State(ret,que) = finishedPS in match ret with
+                                        | Return(retVal) -> retVal
+                                        | _ -> 0.)
+
+        and evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
+            let e = evalExpr _e _p in match _p with
+                | State(state, _q) -> match state with
+                    | Normal -> (match _q with 
+                                    | a::tl -> State(Normal, ([[VarPair(_v, e)] @ a] @ (pop _q))))
+                    | _ -> State(state, _q)
+                | _ -> Nothing
+                                        
+        and evalExpr (_e: expr) (_p: progState): float  = 
+            match _e with 
+                | Num(x) -> x
+                | Var(x) -> varEval x _p
+                | Paren("(", x, ")") -> evalExpr x _p   
+                | Op1(str, x) -> 
+                                (match str with
+                                    | "++" -> (evalExpr x _p) +. 1.
+                                    | "--" -> (evalExpr x _p) -. 1.
+                                    | "!" -> if ((evalExpr x _p) != 0.) then 0. else 1.
+                                    | _ -> 0.0 )
+                | Op2(str, x, y) -> 
+                                (match str with
+                                    | "^" -> (evalExpr x _p) ** (evalExpr y _p)
+                                    | "*" -> (evalExpr x _p) *. (evalExpr y _p)
+                                    | "/" -> (evalExpr x _p) /. (evalExpr y _p)
+                                    | "+" -> (evalExpr x _p) +. (evalExpr y _p)
+                                    | "-" -> (evalExpr x _p) -. (evalExpr y _p)
+                                    | "&&" -> if((evalExpr x _p) != 0. && (evalExpr y _p) != 0.) then 1. else 0.
+                                    | "||" -> if((evalExpr x _p) != 0. || (evalExpr y _p) != 0.) then 1. else 0.
+                                    | "==" -> if((evalExpr x _p) = (evalExpr y _p)) then 1. else 0.
+                                    | "!=" -> if((evalExpr x _p) = (evalExpr y _p)) then 0. else 1.
+                                    | ">=" -> if((evalExpr x _p) >= (evalExpr y _p)) then 1. else 0.
+                                    | "<=" -> if((evalExpr x _p) <= (evalExpr y _p)) then 1. else 0.
+                                    | ">" -> if((evalExpr x _p) > (evalExpr y _p)) then 1. else 0.
+                                    | "<" -> if((evalExpr x _p) < (evalExpr y _p)) then 1. else 0.
+                                    | _ -> 0.0 )
+                | Math(str, x, ")") -> 
+                                (match str with
+                                    | "s(" -> (sin (evalExpr x _p))
+                                    | "c(" -> (cos (evalExpr x _p))
+                                    | "e(" -> (exp (evalExpr x _p))
+                                    | "l(" -> (log (evalExpr x _p))
+                                    | _ -> 0.0 )
+                | Fct(str, [x]) -> evalFct str [x] _p
+                | _ -> 0.0 (*some kind of error here*);;
 
     
 
