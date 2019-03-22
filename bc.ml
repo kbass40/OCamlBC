@@ -105,13 +105,6 @@ let rec search_que_fct (_s: string) (_q: envQueue): sPair = match _q with
 let varEval (_v: string) (_p: progState): float = search_que _v _p;; 
 
 
-(* Test for expression *)
-(*let%expect_test "evalNum" = 
-    evalExpr (Num 10.0) [] |>
-    printf "%F";
-    [%expect {| 10. |}]*)
-
-
 let toNormal (p: progState): progState = 
     (match p with
         | State(s, q) -> State(Normal, q)
@@ -267,82 +260,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
                 | Fct(str, [x]) -> evalFct str [x] _p
                 | _ -> 0.0 (*some kind of error here*);;
 
-    
 
-    
-
-
-(* 
-    v = 10; 
-    v // display v
- *)
-
-(* let p1: block = [
-        Assign("v", Num(1.0));
-        Expr(Var("v")) 
-];
-(*let%expect_test "p1" =
-    evalCode p1 []; 
-    [%expect {| 1. |}]
-    v = 1.0;
-    if (v>10.0) then
-        v = v + 1.0
-    else
-        for(i=2.0; i<10.0; i++) {
-            v = v * i
-        }
-    v   // display v
-*)
-let p2: block = [
-    Assign("v", Num(1.0));
-    If(
-        Op2(">", Var("v"), Num(10.0)), 
-        [Assign("v", Op2("+", Var("v"), Num(1.0)))], 
-        [For(
-            Assign("i", Num(2.0)),
-            Op2("<", Var("i"), Num(10.0)),
-            Expr(Op1("++a", Var("i"))),
-            [
-                Assign("v", Op2("*", Var("v"), Var("i")))
-            ]
-        )]
-    );
-    Expr(Var("v"))
-]; *)
-
-(*let%expect_test "p1" =
-    evalCode p2 []; 
-    [%expect {| 3628800. |}]
-  Fibbonaci sequence
-    define f(x) {
-        if (x<1.0) then
-            return (1.0)
-        else
-            return (f(x-1)+f(x-2))
-    }
-    f(3)
-    f(5)
- *)
-(* let p3: block = 
-    [
-        FctDef("f", ["x"], [
-            If(
-                Op2("<", Var("x"), Num(1.0)),
-                [Return(Num(1.0))],
-                [Return(Op2("+",
-                    Fct("f", [Op2("-", Var("x"), Num(1.0))]),
-                    Fct("f", [Op2("-", Var("x"), Num(1.0))])
-                ))])
-        ]);
-        Expr(Fct("f", [Num(3.0)]));
-        Expr(Fct("f", [Num(5.0)]));
-    ];
-(*let%expect_test "p3" =
-    evalCode p3 []; 
-    [%expect {|
-        2. 
-        5.      
-    |}]*)*)
 
 let runCode (_block: block)= 
     evalCode _block (State(Normal, [[]]))
@@ -363,7 +281,6 @@ let boolBlock = [Assign("x", Num(5.));
 
 let functionBlock = [Assign("y", Num(69.));
                     FctDef("foo", ["x"], [Return(Var("y"))]);
-                    (*Expr(Fct("foo", [Return(5.)]));*)
                     Assign("x", (Fct("foo", [Num(5.)])));
                     Print("print", Var("x"))]
 
