@@ -55,6 +55,23 @@ type progState =
     | Nothing
     | State of statRet * envQueue;;
 
+
+(* Auxialliary Functions *)
+let pop lst = match lst with 
+    | [] -> []
+    | _::tl -> tl ;;
+
+
+let pip_str (lst: string list): string = match lst with 
+    | [] -> ""
+    | a::_ -> a ;;
+
+
+let pip_expr (lst: expr list): expr = match lst with 
+    | [] -> Num(0.)
+    | a::_ -> a ;;    
+
+
 let get_pair_var (_s: string) (_pair: sPair): float = match _pair with
     | VarPair(str,flt) -> if (compare str _s = 0) then flt else 0.
     | _ -> 0.;;
@@ -76,24 +93,16 @@ let rec search_env_fct (_s: string) (_e: env): sPair = (match _e with
     | a::tl -> (match a with 
         | FctPair(name,param,code)   -> if (compare name _s = 0) then (FctPair(name,param,code)) else (search_env_fct _s tl)
         | _ -> Nothing) );;
+
+
+let rec search_que_fct (_s: string) (_q: envQueue): sPair = match _q with 
+    | [] -> Nothing
+    | _e::tl -> let pair = (search_env_fct _s _e) in match pair with 
+        | FctPair(s,p,c) -> FctPair(s,p,c)
+        | _ -> search_que_fct _s (pop _q);;
                                                             
 
 let varEval (_v: string) (_p: progState): float = search_que _v _p;; 
-
-
-let pop lst = match lst with 
-    | [] -> []
-    | _::tl -> tl ;;
-
-
-let pip_str (lst: string list): string = match lst with 
-    | [] -> ""
-    | a::_ -> a ;;
-
-
-let pip_expr (lst: expr list): expr = match lst with 
-    | [] -> Num(0.)
-    | a::_ -> a ;;
 
 
 (* Test for expression *)
@@ -201,7 +210,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
         and evalFct (_v: string) (_exprs: expr list) (_pS: progState): float = (match _pS with
         | State(s, _q) -> match _q with
             | [] -> 0.
-            | _e::tl -> let pair = search_env_fct _v _e in match pair with 
+            | _e::tl -> let pair = search_que_fct _v _q in match pair with 
                 | FctPair(name,param,code) -> 
                     let blockEnv = assignParams param _exprs _e in
                         let newQ = [blockEnv] @ _q in
@@ -328,7 +337,7 @@ let p2: block = [
     ];
 (*let%expect_test "p3" =
     evalCode p3 []; 
-    [%expect {| 
+    [%expect {|
         2. 
         5.      
     |}]*)*)
