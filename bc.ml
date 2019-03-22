@@ -6,10 +6,6 @@ type statRet =
     | Continue
     | Return of float;;
 
-    
-let prints (s : string) = Printf.printf "%s\n" s;;
-let print (s : float) = Printf.printf "%f\n" s;;
-
 type sExpr = 
     | Atom of string
     | List of sExpr list;;
@@ -26,6 +22,7 @@ type expr =                         (*The sometype for expressions*)
 type statement =                                      (*Statement: Call that do stuff lol*)
     | Assign of string*expr                           (*Assignment: Assigns a var to a value*)
     | Print of string*expr                            (*Print*)
+    | Debug of string                                 (*Debug tool to save your eyesight and sanity*)
     | Return of expr                                  (*Return: Special Case to pull from block*)
     | Expr of expr                                    (*Expresssion to evaluate*)
     | If of expr*statement list * statement list      (*If *)
@@ -57,6 +54,12 @@ type progState =
 
 
 (* Auxialliary Functions *)
+let prints (s : string) = Printf.printf "%s\n" s;;
+
+
+let print (s : float) = Printf.printf "%f\n" s;;
+
+
 let pop lst = match lst with 
     | [] -> []
     | _::tl -> tl ;;
@@ -147,6 +150,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
                             | Normal -> print (evalExpr x p); p
                             | _ -> p)
                         | _ -> Nothing)
+        | Debug(s) -> prints s; p
         | If(e, codeT, codeF) -> 
             let cond = evalExpr e p in
                 if(cond>0.0) then
@@ -346,47 +350,45 @@ let runCode (_block: block)=
     evalCode _block (State(Normal, [[]]))
 
 
-let mathBlock = [Assign("v",(Op2("+", Var("v"), Num(5.))));
+let mathBlock = [Debug("Test 10: Basic Math Test");Assign("v",(Op2("+", Var("v"), Num(5.))));
                 Expr(Math("s(", Num(1.), ")"));
                 Assign("v", Op1("++", Var("v")));
                 Assign("x", Var("v"));
                 Print("print", Var("x"));
                 Expr(Op2("==", Var("x"), Var("v")))]
 
-let boolBlock = [Assign("x", Num(5.));
+let boolBlock = [Debug("Test 9: Basic Boolean Test");Assign("x", Num(5.));
                 Expr(Op2("==", Var("x"), Num(2.)));
                 Expr(Op1("!", Var("x")));
                 Expr(Op2(">=", Var("x"), Num(1.)));
                 Expr(Op2("<", Var("x"), Num(10.)))]
 
-let functionBlock = [Assign("y", Num(69.));
+let functionBlock = [Debug("Test 8: Basic Function Return Test");Assign("y", Num(69.));
                     FctDef("foo", ["x"], [Return(Var("y"))]);
-                    (*Expr(Fct("foo", [Return(5.)]));*)
                     Assign("x", (Fct("foo", [Num(5.)])));
                     Print("print", Var("x"))]
 
-let factorialBlock = [FctDef("factorial", ["n"], [If((Op2("==", Var("n"), Num(1.)), [(Return(Num(1.)))], 
+let factorialBlock = [Debug("Test 7: Recursive Factorial Function Test");FctDef("factorial", ["n"], [If((Op2("==", Var("n"), Num(1.)), [(Return(Num(1.)))], 
                                                                                     [Return(Op2("*", Var("n"), Fct("factorial", [Op1("--", Var("n"))])))]))]);
                        Print("print", Fct("factorial", [Num(5.)]))]
 
-let whileBlockTest1 = [Assign("i", Num(3.)); 
+let whileBlockTest1 = [Debug("Test 4: Basic While-Loop Test");Assign("i", Num(3.)); 
                        While(Op2("!=", Var("i"), Num(12.)), [Print("print", Op2("+", Num(10.), Var("i")));
-                                                            Assign("i", (Op1("++", Var("i"))));
-                                                            Print("print", Var("i"))])]
+                                                            Assign("i", (Op1("++", Var("i"))))])]
 
-let whileBlockTest2 = [Assign(("i"), Op2("-", Num(5.), Num(4.)));
+let whileBlockTest2 = [Debug("Test 5: While-Loop Test w/ Break and Continue");Assign(("i"), Op2("-", Num(5.), Num(4.)));
                         While(Op2("<", Var("i"), Num(10.)), [Assign("i", (Op1("++", Var("i"))));
                                                              Print("print", Var("i"));
                                                              If((Op2("==", Var("i"), Num(5.)), [Break], [Continue]));
                                                              Assign("i", (Op1("--", Var("i"))));
                                                              Print("print", Var("i"));])]
 
-let whileBlockTest3 = [While((Op2("<", Var("i"), Num(5.))), [While((Op2("<", Var("j"), Num(3.))), 
+let whileBlockTest3 = [Debug("Test 6: Nested While-Loop Test");While((Op2("<", Var("i"), Num(5.))), [While((Op2("<", Var("j"), Num(3.))), 
                                                             [Print("print", Var("j")); Assign("j", (Op1("++", Var("j"))))]);
                                                             Assign("j", Num(1.0));
                                                             Assign("i", (Op1("++", Var("i"))))])]
 
-let forBlockTest1 = [For((Assign("i", Num(1.))), 
+let forBlockTest1 = [Debug("Test 3: For-Loop Test");For((Assign("i", Num(1.))), 
                         (Op2("<", Var("i"), Num(5.))), 
                         (Assign("i", (Op1("++", Var("i"))))), 
                         [Print("print", Var("i"));
@@ -395,11 +397,17 @@ let forBlockTest1 = [For((Assign("i", Num(1.))),
                          Print("print", Num(69.))]); Print("print", Var("i"));
                                                      Print("print", Var("v"))]  
                                                 
-let ifBlock = [If(Op2("==", Num(1.), Num(1.)), [Assign("x", Num(10.))], [Assign("x", Num(15.))]);
+let ifBlock = [Debug("Test 2: Conditional Test");If(Op2("==", Num(1.), Num(1.)), [Assign("x", Num(10.))], [Assign("x", Num(15.))]);
                 Print("print", Var("x"))]
 
 
+let testBlock = [Debug("Test 1: General Basic Functionality Test");Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
 
-let testBlock = [ Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
+let blocks = [testBlock;ifBlock;forBlockTest1;whileBlockTest1;whileBlockTest2;whileBlockTest3;factorialBlock;functionBlock;boolBlock;mathBlock];;
 
-let main = runCode boolBlock
+let rec run (_b: block list) = prints "";
+    match _b with
+        | [] -> ()
+        | a::tl -> runCode a; run (pop _b);;
+
+let main = run blocks
