@@ -155,7 +155,6 @@ let rec evalStatement (s: statement) (p: progState): progState =
         | For(int, bool, inc, code) ->  let que = evalStatement int p in
                                             evalFor bool inc code que
         | FctDef(str, params, code) -> defFct str params code p
-        (*| _ -> q (*ignore *) (*throw error here *)*)
         and evalFor (_bool: expr) (_inc: statement) (_code: statement list) (_pS: progState): progState = 
             let cond = evalExpr _bool _pS in
                 if(cond>0.) then
