@@ -232,8 +232,8 @@ let rec evalStatement (s: statement) (p: progState): progState =
         and evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
             let e = evalExpr _e _p in match _p with
                 | State(state, _q) -> match state with
-                    | Normal -> (match _q with 
-                                    | a::tl -> State(Normal, ([[VarPair(_v, e)] @ a] @ (pop _q))))
+                    | Normal -> match _q with 
+                                    | a::tl -> State(Normal, ([[VarPair(_v, e)] @ a] @ (pop _q)))
                     | _ -> State(state, _q)
                 | _ -> Nothing
                                         
@@ -413,4 +413,4 @@ let test2 = evalStatement (Assign("z", Num(8.))) []*)
 
 let testBlock = [ Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
 
-let main = runCode boolBlock
+let main = runCode whileBlockTest3
