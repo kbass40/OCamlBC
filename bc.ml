@@ -218,7 +218,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
                                 let finishedPS = evalCode code localPS in
                                     let State(ret,que) = finishedPS in (match ret with
                                         | Return(retVal) -> retVal
-                                        | _ -> 0.))))
+                                        | _ -> 0.)))
 
         and evalAssign (_v: string) (_e: expr) (_p: progState): progState = 
             let e = evalExpr _e _p in match _p with
