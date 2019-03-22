@@ -108,13 +108,6 @@ let rec search_que_fct (_s: string) (_q: envQueue): sPair = match _q with
 let varEval (_v: string) (_p: progState): float = search_que _v _p;; 
 
 
-(* Test for expression *)
-(*let%expect_test "evalNum" = 
-    evalExpr (Num 10.0) [] |>
-    printf "%F";
-    [%expect {| 10. |}]*)
-
-
 let toNormal (p: progState): progState = 
     (match p with
         | State(s, q) -> State(Normal, q)
@@ -125,6 +118,7 @@ let defFct (_str: string) (_params: string list) (_code: statement list) (_p: pr
         | State(s, q) -> match s with
             | Normal -> (match q with 
                             | a::tl -> State(Normal, ([[FctPair(_str, _params, _code)] @ a] @ (pop q))))
+                            | _ -> _p
             | _ -> State(s, q)
         | _ -> Nothing
 
@@ -229,8 +223,9 @@ let rec evalStatement (s: statement) (p: progState): progState =
                 | State(state, _q) -> match state with
                     | Normal -> (match _q with 
                                     | a::tl -> State(Normal, ([[VarPair(_v, e)] @ a] @ (pop _q))))
+                                    | _ -> _p
                     | _ -> State(state, _q)
-                | _ -> Nothing
+                
                                         
         and evalExpr (_e: expr) (_p: progState): float  = 
             match _e with 
@@ -269,82 +264,7 @@ let rec evalStatement (s: statement) (p: progState): progState =
                 | Fct(str, [x]) -> evalFct str [x] _p
                 | _ -> 0.0 (*some kind of error here*);;
 
-    
 
-    
-
-
-(* 
-    v = 10; 
-    v // display v
- *)
-
-(* let p1: block = [
-        Assign("v", Num(1.0));
-        Expr(Var("v")) 
-];
-(*let%expect_test "p1" =
-    evalCode p1 []; 
-    [%expect {| 1. |}]
-    v = 1.0;
-    if (v>10.0) then
-        v = v + 1.0
-    else
-        for(i=2.0; i<10.0; i++) {
-            v = v * i
-        }
-    v   // display v
-*)
-let p2: block = [
-    Assign("v", Num(1.0));
-    If(
-        Op2(">", Var("v"), Num(10.0)), 
-        [Assign("v", Op2("+", Var("v"), Num(1.0)))], 
-        [For(
-            Assign("i", Num(2.0)),
-            Op2("<", Var("i"), Num(10.0)),
-            Expr(Op1("++a", Var("i"))),
-            [
-                Assign("v", Op2("*", Var("v"), Var("i")))
-            ]
-        )]
-    );
-    Expr(Var("v"))
-]; *)
-
-(*let%expect_test "p1" =
-    evalCode p2 []; 
-    [%expect {| 3628800. |}]
-  Fibbonaci sequence
-    define f(x) {
-        if (x<1.0) then
-            return (1.0)
-        else
-            return (f(x-1)+f(x-2))
-    }
-    f(3)
-    f(5)
- *)
-(* let p3: block = 
-    [
-        FctDef("f", ["x"], [
-            If(
-                Op2("<", Var("x"), Num(1.0)),
-                [Return(Num(1.0))],
-                [Return(Op2("+",
-                    Fct("f", [Op2("-", Var("x"), Num(1.0))]),
-                    Fct("f", [Op2("-", Var("x"), Num(1.0))])
-                ))])
-        ]);
-        Expr(Fct("f", [Num(3.0)]));
-        Expr(Fct("f", [Num(5.0)]));
-    ];
-(*let%expect_test "p3" =
-    evalCode p3 []; 
-    [%expect {|
-        2. 
-        5.      
-    |}]*)*)
 
 let runCode (_block: block)= 
     evalCode _block (State(Normal, [[]]))
@@ -371,6 +291,12 @@ let functionBlock = [Debug("Test 8: Basic Function Return Test");Assign("y", Num
 let factorialBlock = [Debug("Test 7: Recursive Factorial Function Test");FctDef("factorial", ["n"], [If((Op2("==", Var("n"), Num(1.)), [(Return(Num(1.)))], 
                                                                                     [Return(Op2("*", Var("n"), Fct("factorial", [Op1("--", Var("n"))])))]))]);
                        Print("print", Fct("factorial", [Num(5.)]))]
+
+let functionBlock2 = [Debug("Test 11: Add Function Test");Assign("x", Num(5.));
+                      FctDef("foo", ["x"; "y"], [Assign("x", Op2("+", Var("x"), Var("y")));
+                                                 Return(Var("x"))]);
+                      Assign("x", Fct("foo", [Num(20.)]));
+                      Print("print", Var("x"))]
 
 let whileBlockTest1 = [Debug("Test 4: Basic While-Loop Test");Assign("i", Num(3.)); 
                        While(Op2("!=", Var("i"), Num(12.)), [Print("print", Op2("+", Num(10.), Var("i")));
@@ -403,7 +329,7 @@ let ifBlock = [Debug("Test 2: Conditional Test");If(Op2("==", Num(1.), Num(1.)),
 
 let testBlock = [Debug("Test 1: General Basic Functionality Test");Assign("i", Num(1.)); Assign("i", Op1("++", Var("i"))); Print("print", Var("i")); Print("print", Op2("!=", Var("i"), Num(3.))) ]
 
-let blocks = [testBlock;ifBlock;forBlockTest1;whileBlockTest1;whileBlockTest2;whileBlockTest3;factorialBlock;functionBlock;boolBlock;mathBlock];;
+let blocks = [testBlock;ifBlock;forBlockTest1;whileBlockTest1;whileBlockTest2;whileBlockTest3;factorialBlock;functionBlock;boolBlock;mathBlock;functionBlock2];;
 
 let rec run (_b: block list) = prints "";
     match _b with
